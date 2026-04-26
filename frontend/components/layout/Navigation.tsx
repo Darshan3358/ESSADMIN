@@ -66,45 +66,25 @@ const groups = [
 import { useTranslate } from '@/hooks/useTranslate';
 import { TranslationKey } from '@/lib/translations';
 
-export default function Navigation() {
+export default function Navigation({ stats, unreadCount: externalUnreadCount }: { stats?: any, unreadCount?: number }) {
     const pathname = usePathname();
     const { t } = useTranslate();
     const [pendingCount, setPendingCount] = useState(0);
     const [unreadCount, setUnreadCount] = useState(0);
 
     useEffect(() => {
-        const fetchPendingCount = async () => {
-            try {
-                const token = localStorage.getItem('token');
-                if (!token) return;
+        if (externalUnreadCount !== undefined) {
+            setUnreadCount(externalUnreadCount);
+        }
+    }, [externalUnreadCount]);
 
-                const [orderRes, notifRes] = await Promise.all([
-                    fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders/myorders?status=pending&limit=1`, {
-                        headers: { Authorization: `Bearer ${token}` }
-                    }),
-                    fetch(`${process.env.NEXT_PUBLIC_API_URL}/notifications`, {
-                        headers: { Authorization: `Bearer ${token}` }
-                    })
-                ]);
+    useEffect(() => {
+        if (stats?.pendingOrdersCount !== undefined) {
+            setPendingCount(stats.pendingOrdersCount);
+        }
+    }, [stats]);
 
-                const orderData = await orderRes.json();
-                const notifData = await notifRes.json();
-
-                if (orderData.success) {
-                    setPendingCount(orderData.stats.counts.payment_pending || 0);
-                }
-                if (notifData.success) {
-                    setUnreadCount(notifData.unreadCount || 0);
-                }
-            } catch (error) {
-                console.error('Error fetching sidebar counts:', error);
-            }
-        };
-
-        fetchPendingCount();
-        const interval = setInterval(fetchPendingCount, 30000); // Update every 30s
-        return () => clearInterval(interval);
-    }, []);
+    // (Redundant internal fetch removed in favor of Shell props)
 
     // Mapping for translation keys
     const getTKey = (name: string): TranslationKey => {
@@ -128,6 +108,7 @@ export default function Navigation() {
                                 <Link
                                     key={item.name}
                                     href={item.href}
+                                    prefetch={false}
                                     className={`relative flex items-center justify-between group px-4 py-3 rounded-xl font-semibold transition-all duration-200 ${isActive
                                         ? 'text-white'
                                         : 'text-gray-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-white/50 dark:hover:bg-slate-800/50'

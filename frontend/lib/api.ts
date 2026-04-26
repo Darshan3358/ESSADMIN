@@ -30,47 +30,68 @@ export const getFullImageUrl = (path: string | null | undefined): string => {
     return `${cleanServerUrl}${cleanPath}`;
 };
 
-export async function apiRequest(endpoint: string, options: RequestInit = {}) {
-    let token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+const requestCache = new Map<string, { promise: Promise<any>, timestamp: number }>();
+const CACHE_DURATION = 1000; // 1 second
 
-    const isAdminPage = typeof window !== 'undefined' && window.location.pathname.includes('/admin');
-    
-    if (typeof window !== 'undefined' && (endpoint.startsWith('/admin') || isAdminPage)) {
-        const adminToken = localStorage.getItem('adminToken');
-        if (adminToken) {
-            token = adminToken;
+export async function apiRequest(endpoint: string, options: RequestInit = {}) {
+    const isGet = !options.method || options.method === 'GET';
+    const cacheKey = `${endpoint}_${JSON.stringify(options.headers || {})}`;
+
+    if (isGet) {
+        const cached = requestCache.get(cacheKey);
+        if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+            return cached.promise;
         }
     }
-    
-    const isFormData = options.body instanceof FormData;
 
-    const headers: Record<string, string> = {
-        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-        ...((options.headers as Record<string, string>) || {}),
-    };
+    const fetchPromise = (async () => {
+        let token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+        const isAdminPage = typeof window !== 'undefined' && window.location.pathname.includes('/admin');
+        
+        if (typeof window !== 'undefined' && (endpoint.startsWith('/admin') || isAdminPage)) {
+            const adminToken = localStorage.getItem('adminToken');
+            if (adminToken) {
+                token = adminToken;
+            }
+        }
+        
+        const isFormData = options.body instanceof FormData;
+        const headers: Record<string, string> = {
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+            ...((options.headers as Record<string, string>) || {}),
+        };
 
-    if (!isFormData) {
-        headers['Content-Type'] = 'application/json';
+        if (!isFormData) {
+            headers['Content-Type'] = 'application/json';
+        }
+
+        const response = await fetch(`${API_URL}${endpoint}`, {
+            ...options,
+            headers,
+        });
+
+        const text = await response.text();
+        let data: any;
+        try {
+            data = text ? JSON.parse(text) : {};
+        } catch (e) {
+            data = { message: text || 'Invalid JSON response from server' };
+        }
+
+        if (!response.ok) {
+            // Remove from cache on error so next attempt can try again
+            if (isGet) requestCache.delete(cacheKey);
+            throw new Error(data.message || `Request failed with status ${response.status}`);
+        }
+
+        return data;
+    })();
+
+    if (isGet) {
+        requestCache.set(cacheKey, { promise: fetchPromise, timestamp: Date.now() });
     }
 
-    const response = await fetch(`${API_URL}${endpoint}`, {
-        ...options,
-        headers,
-    });
-
-    const text = await response.text();
-    let data: any;
-    try {
-        data = text ? JSON.parse(text) : {};
-    } catch (e) {
-        data = { message: text || 'Invalid JSON response from server' };
-    }
-
-    if (!response.ok) {
-        throw new Error(data.message || `Request failed with status ${response.status}`);
-    }
-
-    return data;
+    return fetchPromise;
 }
 
 export const api = {
@@ -86,4 +107,6 @@ export const api = {
             body: body ? (body instanceof FormData ? body : JSON.stringify(body)) : undefined,
         }),
     delete: (endpoint: string) => apiRequest(endpoint, { method: 'DELETE' }),
+    // Helper to clear cache if needed
+    clearCache: () => requestCache.clear(),
 };

@@ -32,23 +32,28 @@ export default function Shell({ children }: { children: React.ReactNode }) {
     };
 
     useEffect(() => {
-        const fetchStats = async () => {
+        const fetchData = async () => {
             try {
-                const response = await api.get('/sellers/stats');
-                if (response.success) {
-                    setStats(response.stats);
+                const [statsRes, notifRes] = await Promise.all([
+                    api.get('/sellers/stats'),
+                    api.get('/notifications')
+                ]);
+                
+                if (statsRes.success) setStats(statsRes.stats);
+                if (notifRes.success) {
+                    setNotifications(notifRes.notifications);
+                    setUnreadCount(notifRes.unreadCount);
                 }
             } catch (error) {
-                console.error('Error fetching stats in Shell:', error);
+                console.error('Error fetching global data in Shell:', error);
             }
         };
 
         if (user) {
-            fetchStats();
-            fetchNotifications();
+            fetchData();
 
             // Poll for notifications every 2 minutes
-            const interval = setInterval(fetchNotifications, 120000);
+            const interval = setInterval(fetchData, 120000);
             return () => clearInterval(interval);
         }
     }, [user]);
@@ -136,7 +141,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
                     </div>
 
                     <div className="flex-1 overflow-y-auto px-4 custom-scrollbar">
-                        <Navigation />
+                        <Navigation stats={stats} unreadCount={unreadCount} />
                     </div>
 
                     <div className="p-6">

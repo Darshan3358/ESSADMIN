@@ -37,6 +37,7 @@ exports.getDashboardStats = async (req, res) => {
         const [
             totalProducts,
             totalOrders,
+            pendingOrdersCount,
             salesResult,
             guaranteeResult,
             activePackages,
@@ -45,6 +46,7 @@ exports.getDashboardStats = async (req, res) => {
         ] = await Promise.all([
             SellerProduct.countDocuments({ seller_id: { $in: sellerIdFilter } }),
             Order.countDocuments({ seller_id: { $in: sellerIdFilter } }),
+            Order.countDocuments({ seller_id: { $in: sellerIdFilter }, status: 'pending' }),
             Order.aggregate([
                 {
                     $match: {
@@ -276,6 +278,7 @@ exports.getDashboardStats = async (req, res) => {
             stats: {
                 totalProducts,
                 totalOrders,
+                pendingOrdersCount,
                 totalSales: allTimeSales,
                 todaySales: todayData.sales,
                 thisMonthSales: thisMonthData.sales,

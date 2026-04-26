@@ -28,12 +28,13 @@ export default function ProductsPage() {
     const fetchData = async () => {
         setIsLoading(true);
         try {
-            const statsRes = await api.get('/sellers/stats');
+            const [statsRes, productsRes] = await Promise.all([
+                api.get('/sellers/stats'),
+                api.get('/products/my-products?limit=1000')
+            ]);
+            
             if (statsRes.success) setStats(statsRes.stats);
-
-            // Fetch only this seller's added products
-            const response = await api.get('/products/my-products?limit=10000');
-            if (response.success) setProducts(response.data || []);
+            if (productsRes.success) setProducts(productsRes.data || []);
         } catch (error) {
             console.error('Error fetching products:', error);
         } finally {
