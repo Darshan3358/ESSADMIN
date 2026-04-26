@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { TrendingUp, TrendingDown, DollarSign, Calendar, ShoppingBag, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 
 interface MetricCardProps {
@@ -11,15 +12,7 @@ interface MetricCardProps {
     color: 'primary' | 'success' | 'warning' | 'danger';
 }
 
-const colorClasses = {
-    primary: 'text-primary-600 bg-primary-50 border-primary-100',
-    success: 'text-success-600 bg-success-50 border-success-100',
-    warning: 'text-warning-600 bg-warning-50 border-warning-100',
-    danger: 'text-danger-600 bg-danger-50 border-danger-100',
-};
-
-
-export default function MetricCard({ title, value, subtitle, change, icon, color }: MetricCardProps) {
+export const MetricCard = React.memo(function MetricCard({ title, value, subtitle, change, icon, color }: MetricCardProps) {
     const isPositive = change !== undefined && change >= 0;
 
     // Map color to Package-style border and icon backgrounds
@@ -65,7 +58,7 @@ export default function MetricCard({ title, value, subtitle, change, icon, color
             <div className={`absolute bottom-0 left-0 h-1 w-full bg-slate-50 opacity-0 group-hover:opacity-100 transition-opacity ${theme.icon}`} />
         </div>
     );
-}
+});
 
 
 export function AmountReceivablesCard({ amount }: { amount: number }) {

@@ -1,17 +1,18 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import {
-    AmountReceivablesCard,
-    TotalLifetimeSalesCard,
-    TodaySalesCard,
-    ThisMonthSalesCard,
-    LastMonthSalesCard
-} from '@/components/dashboard/MetricCard';
-import UserPerformanceChart from '@/components/dashboard/UserPerformanceChart';
+import dynamic from 'next/dynamic';
+
+const UserPerformanceChart = dynamic(() => import('@/components/dashboard/UserPerformanceChart'), { ssr: false });
+const FeaturedProductsCarousel = dynamic(() => import('@/components/products/FeaturedProductsCarousel'), { ssr: false });
+const StorehouseCarousel = dynamic(() => import('@/components/dashboard/StorehouseCarousel'), { ssr: false });
+
+const AmountReceivablesCard = dynamic(() => import('@/components/dashboard/MetricCard').then(mod => mod.AmountReceivablesCard));
+const TotalLifetimeSalesCard = dynamic(() => import('@/components/dashboard/MetricCard').then(mod => mod.TotalLifetimeSalesCard));
+const TodaySalesCard = dynamic(() => import('@/components/dashboard/MetricCard').then(mod => mod.TodaySalesCard));
+const ThisMonthSalesCard = dynamic(() => import('@/components/dashboard/MetricCard').then(mod => mod.ThisMonthSalesCard));
+const LastMonthSalesCard = dynamic(() => import('@/components/dashboard/MetricCard').then(mod => mod.LastMonthSalesCard));
 import { ChartDataPoint, DateRange } from '@/types';
-import FeaturedProductsCarousel from '@/components/products/FeaturedProductsCarousel';
-import StorehouseCarousel from '@/components/dashboard/StorehouseCarousel';
 import { TrendingUp, Package, Zap, Sparkles, Activity, ArrowUpRight, Globe, CheckCircle2, Heart, Eye, Gem, Shield, Clock, ArrowRight, X, Star } from 'lucide-react';
 import Shell from '@/components/layout/Shell';
 import { useAuth } from '@/context/AuthContext';
@@ -51,24 +52,48 @@ export default function DashboardPage() {
         features: []
     });
 
-    const [chartData, setChartData] = useState<any[]>([]);
+    const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
     const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [showHealthModal, setShowHealthModal] = useState(false);
+    
+    
 
-    const refetchChartData = async (range: DateRange) => {
-        let days = 7;
-        if (range === '30days') days = 30;
-        if (range === '6months') days = 180;
-        if (range === '12months') days = 365;
+const mapStats = (dbStats: any) => ({
+    totalLifetimeSales: dbStats.totalSales || 0,
+    amountReceivables: dbStats.guaranteeMoney || 0,
+    todaySales: dbStats.todaySales || 0,
+    thisMonthSales: dbStats.thisMonthSales || 0,
+    lastMonthSales: dbStats.lastMonthSales || 0,
+    netProfit: dbStats.netProfit || 0,
+    netProfitMargin: dbStats.netProfitMargin || 0,
+    planName: dbStats.planName || 'Free Plan',
+    productLimit: dbStats.productLimit || 0,
+    totalProducts: dbStats.totalProducts || 0,
+    remainingProducts: dbStats.remainingProducts || 0,
+    views: dbStats.views || 0,
+    usedViews: dbStats.used_views || 0,
+    remainingViews: dbStats.remaining_views || 0,
+    planFeatures: dbStats.planFeatures || [],
+});
+
+const refetchChartData = async (range: DateRange) => {
+    let days = 7;
+    if (range === '30days' || range === '1M') days = 30;
+    if (range === '6months' || range === '6M') days = 180;
+    if (range === '12months' || range === '1Y') days = 365;
+    if (range === 'ytd') days = 365; // Handle YTD as 1 year for now
 
         try {
             const statsRes = await api.get(`/sellers/stats?days=${days}`);
-            if (statsRes.success && statsRes.stats.chartData) {
-                setChartData(statsRes.stats.chartData);
+            if (statsRes.success && statsRes.stats) {
+                setStats(prev => ({ ...prev, ...mapStats(statsRes.stats) }));
+                if (statsRes.stats.chartData) {
+                    setChartData(statsRes.stats.chartData);
+                }
             }
         } catch (error) {
-            console.error('Error refetching chart data:', error);
+            console.error('Error fetching dashboard stats:', error);
         }
     };
 
@@ -85,11 +110,15 @@ export default function DashboardPage() {
 
             setIsLoading(true);
             try {
-                // Ensure profile info is fresh
-                const [profileRes, shopRes] = await Promise.all([
+                // Fetch all data in parallel for maximum speed
+                const [profileRes, shopRes, statsRes, productsRes] = await Promise.all([
                     api.get('/auth/profile'),
                     api.get('/sellers/shop-settings'),
+                    api.get('/sellers/stats'),
+                    api.get('/products/featured')
                 ]);
+
+                // 1. Update Profile/Shop
                 if (profileRes.success || profileRes._id) {
                     const freshUser = profileRes.success ? profileRes.data : profileRes;
                     if (shopRes.success && shopRes.data?.shop_name) {
@@ -98,40 +127,22 @@ export default function DashboardPage() {
                     updateUser(freshUser);
                 }
 
-                // Fetch basic stats
-                const statsRes = await api.get('/sellers/stats');
+                // 2. Update Stats
                 if (statsRes.success) {
                     const dbStats = statsRes.stats;
                     setStats(prev => ({
                         ...prev,
-                        totalLifetimeSales: dbStats.totalSales || 0,
-                        amountReceivables: dbStats.guaranteeMoney || 0,
-                        todaySales: dbStats.todaySales || 0,
-                        thisMonthSales: dbStats.thisMonthSales || 0,
-                        lastMonthSales: dbStats.lastMonthSales || 0,
-                        netProfit: dbStats.netProfit || 0,
-                        netProfitMargin: dbStats.netProfitMargin || 0,
-                        planName: dbStats.planName || 'Free Plan',
-                        productLimit: dbStats.productLimit || 0,
-                        totalProducts: dbStats.totalProducts || 0,
-                        remainingProducts: dbStats.remainingProducts || 0,
-                        views: dbStats.views || 0,
-                        usedViews: dbStats.used_views || 0,
-                        remainingViews: dbStats.remaining_views || 0,
-                        planFeatures: dbStats.planFeatures || [],
+                        ...mapStats(dbStats)
                     }));
                     if (dbStats.chartData) {
                         setChartData(dbStats.chartData);
                     }
                 }
 
-                // Fetch real products for carousel (featured by admin)
-                const productsRes = await api.get('/products/featured');
+                // 3. Update Featured Products
                 if (productsRes.success) {
                     setFeaturedProducts(productsRes.data || []);
                 }
-                
-/* Removed redundant planRes fetching as features are now in stats */
             } catch (error) {
                 console.error('Error fetching dashboard data:', error);
             } finally {

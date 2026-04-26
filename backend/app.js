@@ -14,6 +14,8 @@ const rechargeRoutes = require('./routes/rechargeRoutes');
 const guaranteeRoutes = require('./routes/guaranteeRoutes');
 const supplierRoutes = require('./routes/supplierRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const compression = require('compression');
+const rateLimit = require('express-rate-limit');
 const notificationRoutes = require('./routes/notificationRoutes');
 
 const app = express();
@@ -26,6 +28,20 @@ const connectDB = require('./config/db');
 const mongoose = require('mongoose');
 let codeRotated = false;
 
+// 1. Basic Middlewares
+app.use(cors({
+    origin: true, 
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
+}));
+
+app.use(helmet({
+    crossOriginResourcePolicy: false,
+    crossOriginEmbedderPolicy: false,
+}));
+
+// 2. Request Logging & DB Warm-up
 app.use((req, res, next) => {
     // Basic request logging for Vercel troubleshooting
     const path = (req.url || '').split('?')[0];
@@ -56,20 +72,21 @@ app.use((req, res, next) => {
 // Trust proxy for Vercel
 app.set('trust proxy', 1);
 
-// CORS configuration - Simplified for debugging
-app.use(cors({
-    origin: true, // Reflect origin
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
-}));
+// 3. Performance & Optimization
+app.use(compression());
 
+// 4. Rate Limiting
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 2000, // Increased limit for dashboard which makes many calls
+    message: 'Too many requests from this IP, please try again after 15 minutes',
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+// 4. Rate Limiting - Disabled for dashboard stability
+// app.use('/api/', limiter);
 
-// Other middleware
-app.use(helmet({
-    crossOriginResourcePolicy: false,
-    crossOriginEmbedderPolicy: false,
-}));
+// 5. Body Parsing
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 if (process.env.NODE_ENV === 'development') {

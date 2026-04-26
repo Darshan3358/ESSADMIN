@@ -160,4 +160,4 @@ export interface ChartDataPoint {
 }
 
 export type TimeFilter = 'daily' | 'monthly' | 'yearly';
-export type DateRange = '7days' | '30days' | '6months' | '12months' | 'ytd';
+export type DateRange = '1W' | '1M' | '6M' | '1Y' | '7days' | '30days' | '6months' | '12months' | 'ytd';

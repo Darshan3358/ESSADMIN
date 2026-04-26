@@ -51,20 +51,21 @@ const getProducts = asyncHandler(async (req, res) => {
     if (filter.inStorehouseCarousel === 'true') filter.inStorehouseCarousel = true;
     if (filter.inStorehouseCarousel === 'false') filter.inStorehouseCarousel = false;
 
-    // Total Count for Pagination (before pagination is applied)
-    const countFeatures = new APIFeatures(Product.find(filter), req.query).search().filter();
-    const totalCount = await Product.countDocuments(countFeatures.query.getFilter());
-
-    const limit = req.query.limit * 1 || 10;
-    const totalPages = Math.ceil(totalCount / limit);
-
-    const features = new APIFeatures(Product.find(filter), req.query)
+    // Total Count and Data fetch in parallel
+    const countFeatures = new APIFeatures(Product.find(filter).lean(), req.query).search().filter();
+    const features = new APIFeatures(Product.find(filter).lean(), req.query)
         .search()
         .filter()
         .sort()
         .paginate();
 
-    const products = await features.query;
+    const [totalCount, products] = await Promise.all([
+        Product.countDocuments(countFeatures.query.getFilter()),
+        features.query
+    ]);
+
+    const limit = req.query.limit * 1 || 10;
+    const totalPages = Math.ceil(totalCount / limit);
 
     res.json({
         success: true,
@@ -79,11 +80,11 @@ const getProducts = asyncHandler(async (req, res) => {
 // @route   GET /api/products/featured
 // @access  Public
 const getFeaturedProducts = asyncHandler(async (req, res) => {
-    let products = await Product.find({ isDeleted: { $ne: true }, isFeatured: true }).limit(20);
+    let products = await Product.find({ isDeleted: { $ne: true }, isFeatured: true }).limit(20).lean();
 
     // Fallback block if admin hasn't selected any featured products yet
     if (products.length === 0) {
-        products = await Product.find({ isDeleted: { $ne: true } }).sort({ createdAt: -1 }).limit(10);
+        products = await Product.find({ isDeleted: { $ne: true } }).sort({ createdAt: -1 }).limit(10).lean();
     }
 
     res.json({
@@ -97,7 +98,7 @@ const getFeaturedProducts = asyncHandler(async (req, res) => {
 // @route   GET /api/products/:id
 // @access  Public
 const getProductById = asyncHandler(async (req, res) => {
-    const product = await Product.findById(req.params.id);
+    const product = await Product.findById(req.params.id).lean();
 
     if (product && !product.isDeleted) {
         res.json({ success: true, data: normalizeProduct(product) });
@@ -310,7 +311,7 @@ const getSellerProducts = asyncHandler(async (req, res) => {
     };
 
     // Get ALL linked product links
-    const sellerProductsLink = await SellerProduct.find(query).sort({ created_at: -1 });
+    const sellerProductsLink = await SellerProduct.find(query).sort({ created_at: -1 }).lean();
 
     if (!sellerProductsLink || sellerProductsLink.length === 0) {
         return res.json({
@@ -332,7 +333,7 @@ const getSellerProducts = asyncHandler(async (req, res) => {
             { _id: { $in: productIds.filter(id => mongoose.isValidObjectId(id)) } },
             { id: { $in: productIds } }
         ]
-    });
+    }).lean();
 
     // Create a Lookup Map for O(1) access
     const productMap = new Map();
@@ -347,10 +348,9 @@ const getSellerProducts = asyncHandler(async (req, res) => {
         const product = productMap.get(linkIdStr);
 
         if (product) {
+            const normalized = normalizeProduct(product);
             return {
-                ...product.toObject(),
-                _id: product._id,
-                id: product.id,
+                ...normalized,
                 link_id: link._id  // MongoDB _id of the SellerProduct document
             };
         } else {

@@ -17,7 +17,7 @@ const { getAvailableBalance } = require('../utils/wallet');
 exports.getDashboardStats = async (req, res) => {
     try {
         const sellerId = req.user._id;
-        const seller = await Seller.findById(sellerId);
+        const seller = await Seller.findById(sellerId).lean();
 
         if (!seller) {
             return res.status(404).json({ success: false, message: 'Seller not found' });
@@ -33,61 +33,58 @@ exports.getDashboardStats = async (req, res) => {
             String(seller.id)
         ].filter(v => v !== undefined && v !== null);
 
-        // 1. Total Products
-        const totalProducts = await SellerProduct.countDocuments({
-            seller_id: { $in: sellerIdFilter }
-        });
-
-        // 2. Total Orders (assigned to this seller)
-        const totalOrders = await Order.countDocuments({
-            seller_id: { $in: sellerIdFilter }
-        });
-
-        // 3. Total Sales (Confirmed/Completed orders volume)
-        // More robust aggregation: filter out empty totals before converting
-        const salesResult = await Order.aggregate([
-            {
-                $match: {
-                    seller_id: { $in: sellerIdFilter },
-                status: { $regex: 'pending|processing|delivered|shipped|completed', $options: 'i' }
-                }
-            },
-            {
-                $project: {
-                    order_total_val: {
-                        $cond: {
-                            if: { $and: [{ $ne: ["$order_total", ""] }, { $ne: ["$order_total", null] }] },
-                            then: { $toDouble: "$order_total" },
-                            else: 0
+        // 1-6. Fetch independent stats in parallel
+        const [
+            totalProducts,
+            totalOrders,
+            salesResult,
+            guaranteeResult,
+            activePackages,
+            myProductLinks,
+            availableBalance
+        ] = await Promise.all([
+            SellerProduct.countDocuments({ seller_id: { $in: sellerIdFilter } }),
+            Order.countDocuments({ seller_id: { $in: sellerIdFilter } }),
+            Order.aggregate([
+                {
+                    $match: {
+                        seller_id: { $in: sellerIdFilter },
+                        status: { $regex: 'pending|processing|delivered|shipped|completed', $options: 'i' }
+                    }
+                },
+                {
+                    $project: {
+                        order_total_val: {
+                            $cond: {
+                                if: { $and: [{ $ne: ["$order_total", ""] }, { $ne: ["$order_total", null] }] },
+                                then: { $toDouble: "$order_total" },
+                                else: 0
+                            }
                         }
                     }
-                }
-            },
-            { $group: { _id: null, total: { $sum: "$order_total_val" } } }
+                },
+                { $group: { _id: null, total: { $sum: "$order_total_val" } } }
+            ]),
+            GuaranteeMoney.aggregate([
+                { $match: { seller_id: { $in: [seller.id, String(seller.id)] }, status: 1 } },
+                { $group: { _id: null, total: { $sum: { $toDouble: { $ifNull: ["$amount", 0] } } } } }
+            ]),
+            Package.find({
+                seller_id: { $in: sellerIdFilter },
+                status: 1
+            }).sort({ product_limit: -1 }).lean(),
+            SellerProduct.find({ seller_id: { $in: sellerIdFilter } }).lean(),
+            Promise.resolve(seller.wallet_balance || 0)
         ]);
+
         const totalSales = salesResult.length > 0 ? salesResult[0].total : 0;
-
-        // 4. Guarantee Money (Sum of approved records)
-        // Linking by seller.id which is the numeric ID used in GuaranteeMoney collection
-        const guaranteeResult = await GuaranteeMoney.aggregate([
-            { $match: { seller_id: { $in: [seller.id, String(seller.id)] }, status: 1 } },
-            { $group: { _id: null, total: { $sum: { $toDouble: { $ifNull: ["$amount", 0] } } } } }
-        ]);
         const guaranteeMoney = guaranteeResult.length > 0 ? (guaranteeResult[0].total || 0) : 0;
-
-        // 5. Package & Product Limits
-        // Find ALL active packages and pick the one with the HIGHEST product_limit
-        // Use Mixed ID matching to handle both ObjectId and numeric seller_id storage
-        const activePackages = await Package.find({
-            seller_id: { $in: sellerIdFilter },
-            status: 1
-        }).sort({ product_limit: -1 });
         const activePackage = activePackages[0] || null;
         
         // Find corresponding PackagePlan to get features
         let planFeatures = [];
         if (activePackage) {
-            const plan = await PackagePlan.findOne({ name: activePackage.type });
+            const plan = await PackagePlan.findOne({ name: activePackage.type }).lean();
             if (plan) {
                 planFeatures = plan.features || [];
             }
@@ -97,8 +94,6 @@ exports.getDashboardStats = async (req, res) => {
         const remainingProducts = Math.max(0, productLimit - totalProducts);
 
         // 6. Category-wise Counts
-        // First get all items to get their product detail categories
-        const myProductLinks = await SellerProduct.find({ seller_id: { $in: sellerIdFilter } });
         const productIds = myProductLinks.map(l => l.product_id);
 
         const categoryCounts = await Product.aggregate([
@@ -113,57 +108,69 @@ exports.getDashboardStats = async (req, res) => {
             { $group: { _id: "$category", count: { $sum: 1 } } }
         ]);
 
-        const availableBalance = seller.wallet_balance || 0;
-
-        const shopProfile = await ShopProfile.findOne({ seller_id: sellerId });
-
         // Calculate specific time-based stats
         const now = new Date();
         const startOfToday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
         const startOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
         const startOfLastMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
-        const endOfLastMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 0, 23, 59, 59, 999));
 
         const getSalesForPeriod = async (start, end) => {
+            const startStr = start.toISOString().split('T')[0]; // Just YYYY-MM-DD
             const query = {
                 seller_id: { $in: sellerIdFilter },
                 status: { $regex: 'pending|processing|shipped|completed|delivered', $options: 'i' },
-                createdAt: { $gte: start }
+                $or: [
+                    { createdAt: { $gte: start } },
+                    { created_at: { $gte: startStr } } // More lenient for legacy strings
+                ]
             };
-            if (end) query.createdAt.$lt = end;
+            if (end) {
+                const endStr = end.toISOString().split('T')[0];
+                query.$or = query.$or.map(cond => {
+                    const field = Object.keys(cond)[0];
+                    const val = field === 'createdAt' ? end : endStr;
+                    return { 
+                        $and: [
+                            cond,
+                            { [field]: { $lt: val } }
+                        ]
+                    };
+                });
+            }
 
             const res = await Order.aggregate([
                 { $match: query },
                 {
                     $group: {
                         _id: null,
-                        sales: { $sum: { $toDouble: "$order_total" } },
-                        cost: { $sum: { $toDouble: "$cost_amount" } }
+                        sales: { $sum: { $toDouble: { $ifNull: ["$order_total", 0] } } },
+                        cost: { $sum: { $toDouble: { $ifNull: ["$cost_amount", 0] } } }
                     }
                 }
             ]);
             return res.length > 0 ? res[0] : { sales: 0, cost: 0 };
         };
 
-        const todayData = await getSalesForPeriod(startOfToday);
-        const thisMonthData = await getSalesForPeriod(startOfMonth);
-        const lastMonthData = await getSalesForPeriod(startOfLastMonth, startOfMonth);
-
-        // Fetch all-time profit
-        const allTimeProfitResult = await Order.aggregate([
-            {
-                $match: {
-                    seller_id: { $in: sellerIdFilter },
-                    status: { $regex: 'processing|shipped|completed|delivered', $options: 'i' }
+        const [todayData, thisMonthData, lastMonthData, allTimeProfitResult, shopProfile] = await Promise.all([
+            getSalesForPeriod(startOfToday),
+            getSalesForPeriod(startOfMonth),
+            getSalesForPeriod(startOfLastMonth, startOfMonth),
+            Order.aggregate([
+                {
+                    $match: {
+                        seller_id: { $in: sellerIdFilter },
+                        status: { $regex: 'pending|processing|shipped|completed|delivered', $options: 'i' }
+                    }
+                },
+                {
+                    $group: {
+                        _id: null,
+                        totalSales: { $sum: { $toDouble: { $ifNull: ["$order_total", 0] } } },
+                        totalCost: { $sum: { $toDouble: { $ifNull: ["$cost_amount", 0] } } }
+                    }
                 }
-            },
-            {
-                $group: {
-                    _id: null,
-                    totalSales: { $sum: { $toDouble: "$order_total" } },
-                    totalCost: { $sum: { $toDouble: "$cost_amount" } }
-                }
-            }
+            ]),
+            ShopProfile.findOne({ seller_id: sellerId }).lean()
         ]);
         const allTimeSales = allTimeProfitResult.length > 0 ? allTimeProfitResult[0].totalSales : 0;
         const allTimeCost = allTimeProfitResult.length > 0 ? allTimeProfitResult[0].totalCost : 0;
@@ -185,12 +192,32 @@ exports.getDashboardStats = async (req, res) => {
                     seller_id: { $in: sellerIdFilter },
                     status: { $regex: 'pending|processing|shipped|completed|delivered', $options: 'i' },
                     status: { $nin: ['cancelled', 'Cancelled'] },
-                    createdAt: { $gte: startDate }
+                    $or: [
+                        { createdAt: { $gte: startDate } },
+                        { created_at: { $gte: startDate.toISOString().split('T')[0] } }
+                    ]
+                }
+            },
+            {
+                $project: {
+                    date: { 
+                        $ifNull: [
+                            "$createdAt", 
+                            { 
+                                $dateFromString: { 
+                                    dateString: "$created_at",
+                                    onError: new Date(0) // Fallback for invalid strings
+                                } 
+                            } 
+                        ] 
+                    },
+                    order_total: 1,
+                    cost_amount: 1
                 }
             },
             {
                 $group: {
-                    _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+                    _id: { $dateToString: { format: "%Y-%m-%d", date: "$date" } },
                     sales: { $sum: { $toDouble: { $ifNull: ["$order_total", 0] } } },
                     profit: { $sum: { $subtract: [{ $toDouble: { $ifNull: ["$order_total", 0] } }, { $toDouble: { $ifNull: ["$cost_amount", 0] } }] } },
                     orders: { $sum: 1 }
@@ -280,12 +307,12 @@ exports.getDashboardStats = async (req, res) => {
 // @access  Public/Admin
 exports.getSellers = async (req, res) => {
     try {
-        const sellers = await Seller.find({}).sort({ createdAt: -1 });
+        const sellers = await Seller.find({}).sort({ createdAt: -1 }).lean();
 
         const sellersWithDetails = await Promise.all(sellers.map(async (seller) => {
-            const payment = await PaymentDetails.findOne({ seller_id: seller._id });
+            const payment = await PaymentDetails.findOne({ seller_id: seller._id }).lean();
             return {
-                ...seller.toObject(),
+                ...seller,
                 payment: payment || {
                     bank_name: 'N/A',
                     account_name: 'N/A',

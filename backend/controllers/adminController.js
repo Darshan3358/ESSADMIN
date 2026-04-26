@@ -26,6 +26,7 @@ const getSellerStatsForAdmin = asyncHandler(async (req, res) => {
     const { sellerId } = req.params;
     const seller = await Seller.findById(sellerId);
 
+    
     if (!seller) {
         res.status(404);
         throw new Error('Seller not found');
@@ -293,30 +294,41 @@ const deletePackagePlan = asyncHandler(async (req, res) => {
 const getDashboardStats = asyncHandler(async (req, res) => {
     const range = req.query.range || '7days';
 
-    const totalUsers = await Seller.countDocuments({ role: 'seller' });
-    const totalProducts = await Product.countDocuments({ isDeleted: { $ne: true } });
-    const totalOrders = await Order.countDocuments({});
-    const totalRecharges = await Recharge.countDocuments({});
-    const totalWithdrawals = await Withdraw.countDocuments({});
-    const totalPackages = await Package.countDocuments({});
-
-    const pendingRecharges = await Recharge.countDocuments({ status: 0 });
-    const pendingWithdrawals = await Withdraw.countDocuments({ status: 0 });
-
-    // Revenue summary (Total approved recharges)
-    const rechargeRevenue = await Recharge.aggregate([
-        { $match: { status: 1 } },
-        { $group: { _id: null, total: { $sum: { $toDouble: '$amount' } } } }
+    const [
+        totalUsers,
+        totalProducts,
+        totalOrders,
+        totalRecharges,
+        totalWithdrawals,
+        totalPackages,
+        pendingRecharges,
+        pendingWithdrawals,
+        rechargeRevenue
+    ] = await Promise.all([
+        Seller.countDocuments({ role: 'seller' }),
+        Product.countDocuments({ isDeleted: { $ne: true } }),
+        Order.countDocuments({}),
+        Recharge.countDocuments({}),
+        Withdraw.countDocuments({}),
+        Package.countDocuments({}),
+        Recharge.countDocuments({ status: 0 }),
+        Withdraw.countDocuments({ status: 0 }),
+        Recharge.aggregate([
+            { $match: { status: 1 } },
+            { $group: { _id: null, total: { $sum: { $toDouble: '$amount' } } } }
+        ])
     ]);
+
     const totalRevenue = rechargeRevenue.length > 0 ? rechargeRevenue[0].total : 0;
 
     // Orders this month
     const now = new Date();
     const startOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
-    const ordersThisMonth = await Order.countDocuments({ createdAt: { $gte: startOfMonth } });
-
-    // New sellers this month
-    const newSellers = await Seller.countDocuments({ role: 'seller', createdAt: { $gte: startOfMonth } });
+    
+    const [ordersThisMonth, newSellers] = await Promise.all([
+        Order.countDocuments({ createdAt: { $gte: startOfMonth } }),
+        Seller.countDocuments({ role: 'seller', createdAt: { $gte: startOfMonth } })
+    ]);
 
     // Chart data based on range
     // Chart data based on range
