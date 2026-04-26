@@ -3,7 +3,8 @@
 import { useState, useEffect, Suspense } from 'react';
 import Shell from '@/components/layout/Shell';
 import {
-    Warehouse, Package, Search, Filter, CheckCircle2, PlusCircle, Tag, Loader2
+    Warehouse, Package, Search, Filter, CheckCircle2, PlusCircle, Tag, Loader2,
+    ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
@@ -23,6 +24,8 @@ function StorehousePageInner() {
     const [addError, setAddError] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
     const [selectedCategory, setSelectedCategory] = useState('All');
+    const [currentPage, setCurrentPage] = useState(1);
+    const PRODUCTS_PER_PAGE = 9;
 
     useEffect(() => {
         if (!authLoading && !user) {
@@ -91,6 +94,16 @@ function StorehousePageInner() {
             const q = searchQuery.toLowerCase();
             return (p.name || '').toLowerCase().includes(q) || (p.category || '').toLowerCase().includes(q);
         });
+
+    const totalPages = Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE);
+    const paginatedProducts = filteredProducts.slice(
+        (currentPage - 1) * PRODUCTS_PER_PAGE,
+        currentPage * PRODUCTS_PER_PAGE
+    );
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [selectedCategory, searchQuery]);
 
     if (authLoading || !user) return null;
 
@@ -207,8 +220,9 @@ function StorehousePageInner() {
                                 </div>
                             </div>
                         ) : (
-                            <div className="grid grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-2 sm:gap-3 md:gap-6">
-                                {filteredProducts.map(product => {
+                            <div className="space-y-8">
+                                <div className="grid grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-2 sm:gap-3 md:gap-6">
+                                    {paginatedProducts.map(product => {
                                     const isAdded = addedProductIds.has(String(product._id));
                                     const isAdding = addingId === product._id;
                                     const imgSrc = product.image
@@ -276,6 +290,61 @@ function StorehousePageInner() {
                                         </div>
                                     );
                                 })}
+                                </div>
+
+                                {/* Pagination Controls */}
+                                {totalPages > 1 && (
+                                    <div className="flex items-center justify-center gap-2 mt-8">
+                                        <button
+                                            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                                            disabled={currentPage === 1}
+                                            className="p-2 sm:p-3 rounded-xl border border-gray-100 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 text-gray-600 dark:text-slate-400 disabled:opacity-30 transition-all hover:bg-gray-50 dark:hover:bg-slate-800"
+                                        >
+                                            <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+                                        </button>
+
+                                        <div className="flex items-center gap-1 sm:gap-2">
+                                            {[...Array(totalPages)].map((_, i) => {
+                                                const pageNum = i + 1;
+                                                // Only show current page, first, last, and pages around current
+                                                if (
+                                                    pageNum === 1 ||
+                                                    pageNum === totalPages ||
+                                                    (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
+                                                ) {
+                                                    return (
+                                                        <button
+                                                            key={pageNum}
+                                                            onClick={() => setCurrentPage(pageNum)}
+                                                            className={`w-8 h-8 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl text-[10px] sm:text-sm font-black transition-all ${currentPage === pageNum
+                                                                ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20'
+                                                                : 'text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800'
+                                                                }`}
+                                                        >
+                                                            {pageNum}
+                                                        </button>
+                                                    );
+                                                } else if (
+                                                    pageNum === currentPage - 2 ||
+                                                    pageNum === currentPage + 2
+                                                ) {
+                                                    return (
+                                                        <span key={pageNum} className="text-gray-400 dark:text-slate-600 font-black">...</span>
+                                                    );
+                                                }
+                                                return null;
+                                            })}
+                                        </div>
+
+                                        <button
+                                            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                                            disabled={currentPage === totalPages}
+                                            className="p-2 sm:p-3 rounded-xl border border-gray-100 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 text-gray-600 dark:text-slate-400 disabled:opacity-30 transition-all hover:bg-gray-50 dark:hover:bg-slate-800"
+                                        >
+                                            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
