@@ -71,6 +71,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     }
                 }).catch(err => {
                     console.error('Initial profile sync failed:', err.message);
+                    if (err.message && err.message.includes('Not authorized')) {
+                        localStorage.removeItem('token');
+                        localStorage.removeItem('user');
+                        setToken(null);
+                        setUser(null);
+                        router.push('/login');
+                    }
                 });
             } catch (error) {
                 console.error('Failed to parse stored user:', error);

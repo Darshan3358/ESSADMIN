@@ -236,7 +236,7 @@ function StorehousePageInner() {
                                             {/* Product Image */}
                                             <div className="h-32 sm:h-56 bg-gray-50 dark:bg-slate-800/50 flex items-center justify-center overflow-hidden relative group/img">
                                                 {imgSrc ? (
-                                                    <img src={imgSrc} alt={product.name} className="w-full h-full object-cover group-hover/img:scale-110 transition-transform duration-700" />
+                                                    <img src={imgSrc} alt={product.name} className="w-full h-full object-contain group-hover/img:scale-110 transition-transform duration-700" />
                                                 ) : (
                                                     <Tag className="w-8 h-8 sm:w-12 sm:h-12 text-gray-200 dark:text-slate-700" />
                                                 )}

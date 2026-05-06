@@ -105,7 +105,7 @@ const refetchChartData = async (range: DateRange) => {
     // Fetch original stats from Database
     useEffect(() => {
         const fetchData = async () => {
-            if (!user) return;
+            if (!user?._id) return;
 
             setIsLoading(true);
             try {
@@ -149,10 +149,11 @@ const refetchChartData = async (range: DateRange) => {
             }
         };
 
-        if (user) {
+        if (user?._id) {
             fetchData();
         }
-    }, [user]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [user?._id]);
 
     // Optimized Loading: Show Shell immediately to feel fast
     if (authLoading) return null;
@@ -189,53 +190,54 @@ const refetchChartData = async (range: DateRange) => {
                         </div>
 
                         {/* Single Store Health Card */}
-                        <div className="relative">
-                            <div className="glass-card !bg-white/98 dark:!bg-slate-900/98 border-white/50 dark:border-slate-800/50 p-4 sm:p-7 w-full max-w-[220px] sm:max-w-none backdrop-blur-3xl shadow-[0_20px_40px_rgba(0,0,0,0.1)] transition-all duration-300 relative overflow-hidden group/card">
-                                {/* Top accent bar */}
-                                <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-500"></div>
-
+                        <div className="relative w-full flex justify-center md:block md:w-auto mt-6 md:mt-0">
+                            <div className="glass-card bg-gradient-to-br from-[#f8fafc] to-[#eef2ff] dark:from-slate-800 dark:to-slate-900 border-t-[4px] border-t-[#22c55e] rounded-[18px] p-4 sm:p-[20px] w-full max-w-[340px] md:max-w-[320px] lg:max-w-none backdrop-blur-3xl shadow-[0_12px_30px_rgba(0,0,0,0.08)] transition-all duration-300 relative overflow-hidden group/card flex flex-col gap-3 sm:gap-[16px]">
                                 {/* Subtle background glow */}
-                                <div className="absolute -top-10 -right-10 w-40 h-40 bg-emerald-100/40 rounded-full blur-3xl"></div>
+                                <div className="absolute -top-10 -right-10 w-40 h-40 bg-green-100/40 rounded-full blur-3xl"></div>
 
-                                <div className="relative z-10 text-left space-y-5">
-                                    {/* Header Row */}
-                                    <div className="flex justify-between items-center">
-                                        <div className="flex items-center gap-3">
-                                            <div className="p-2.5 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl shadow-inner">
-                                                <Heart className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-                                            </div>
-                                            <span className="text-sm font-black text-slate-800 dark:text-slate-100">Store Health</span>
+                                {/* Header Row */}
+                                <div className="relative z-10 flex justify-between items-center w-full">
+                                    <div className="flex items-center gap-2 sm:gap-3">
+                                        <div className="p-1.5 sm:p-2 bg-green-50 dark:bg-green-900/20 rounded-xl shadow-inner">
+                                            <Heart className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 dark:text-green-400" />
                                         </div>
-                                        <span className="text-[10px] font-black text-white px-3 py-1.5 bg-emerald-500 rounded-full tracking-wider shadow-md flex items-center gap-1">
-                                            <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse inline-block"></span>
-                                            {user.store_status || 'ACTIVE'}
-                                        </span>
+                                        <span className="text-xs sm:text-sm font-black text-slate-800 dark:text-slate-100">Store Health</span>
                                     </div>
+                                    <span className="text-[10px] sm:text-[11px] font-medium text-[#15803d] bg-[#dcfce7] px-[8px] sm:px-[10px] py-[2px] sm:py-[3px] rounded-full flex items-center gap-1">
+                                        <span className="w-1.5 h-1.5 bg-[#15803d] rounded-full animate-pulse inline-block"></span>
+                                        {user.store_status || 'ACTIVE'}
+                                    </span>
+                                </div>
 
-                                    {/* Score */}
-                                    <div>
-                                        <h4 className="text-3xl sm:text-[3.8rem] font-black text-slate-900 dark:text-slate-100 leading-none tracking-tighter">
+                                {/* Split Layout Area */}
+                                <div className="relative z-10 grid grid-cols-[auto_1fr] gap-3 sm:gap-5 items-center">
+                                    {/* Left: Hero Score */}
+                                    <div className="text-left">
+                                        <h4 className="text-3xl sm:text-[42px] font-[800] text-[#111827] dark:text-white leading-none tracking-tight">
                                             {user.store_health || 95}%
                                         </h4>
                                     </div>
 
-                                    {/* Progress Bar */}
-                                    <div>
-                                        <div className="flex justify-between text-[10px] font-bold text-slate-400 dark:text-slate-500 mb-1.5">
-                                            <span>Performance</span>
-                                            <span className="text-emerald-600 dark:text-emerald-400">{user.store_performance || 'Excellent'}</span>
-                                        </div>
-                                        <div className="h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden shadow-inner">
+                                    {/* Right: Compact Info Block */}
+                                    <div className="flex flex-col space-y-1">
+                                        <span className="text-[11px] text-[#6b7280] font-medium">Performance</span>
+                                        <span className="text-[13px] font-bold text-[#15803d] leading-tight mb-1">{user.store_performance || 'Excellent'}</span>
+                                        
+                                        {/* Progress bar */}
+                                        <div className="h-[10px] w-full bg-[#e5e7eb] dark:bg-slate-800 rounded-full overflow-hidden">
                                             <div
-                                                className="h-full bg-gradient-to-r from-emerald-400 to-teal-500 rounded-full transition-all duration-1000"
+                                                className="h-full bg-gradient-to-r from-[#22c55e] to-[#4ade80] rounded-full transition-all duration-1000"
                                                 style={{ width: `${user.store_health || 95}%` }}
                                             ></div>
                                         </div>
                                     </div>
+                                </div>
 
+                                {/* Bottom Info */}
+                                <div className="relative z-10 mt-1 flex flex-col items-start gap-[16px] w-full">
                                     {/* Last Updated */}
-                                    <p className="text-[11px] text-slate-400 dark:text-slate-500 font-semibold flex items-center gap-1.5">
-                                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shadow-sm" />
+                                    <p className="text-[12px] text-[#9ca3af] flex items-center gap-[6px]">
+                                        <CheckCircle2 className="w-3.5 h-3.5 text-[#22c55e] shadow-sm" />
                                         Last Updated: <span className="text-slate-600 dark:text-slate-300 font-bold">
                                             {user.store_health_updated_at 
                                                 ? new Date(user.store_health_updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) 
@@ -246,7 +248,7 @@ const refetchChartData = async (range: DateRange) => {
                                     {/* Show Detail Button — visible to all (admin can control via backend) */}
                                     <button
                                         onClick={() => setShowHealthModal(true)}
-                                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white rounded-xl font-bold text-xs transition-all shadow-md shadow-emerald-200 hover:shadow-lg hover:shadow-emerald-300 active:scale-95"
+                                        className="w-full flex items-center justify-center gap-2 p-[10px] border border-[#22c55e] text-[#22c55e] bg-transparent hover:bg-green-50 dark:hover:bg-green-900/20 rounded-[10px] font-bold text-xs transition-all active:scale-95"
                                     >
                                         <Eye className="w-3.5 h-3.5" />
                                         Show Detail
@@ -408,6 +410,11 @@ const refetchChartData = async (range: DateRange) => {
                         }} 
                     />
                 </section>
+
+                {/* Additional Analytics Section below Featured Products
+                <section className="animate-slide-up stagger-6">
+                    <UserPerformanceChart data={chartData} onRangeChange={refetchChartData} />
+                </section> */}
 
 
                 {/* Footer */}

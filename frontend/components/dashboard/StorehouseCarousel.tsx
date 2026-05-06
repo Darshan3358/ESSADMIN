@@ -139,7 +139,7 @@ export default function StorehouseCarousel({ onProductAdded }: StorehouseCarouse
                                     {/* Image Section */}
                                     <div className="h-48 bg-gray-50 dark:bg-slate-800/50 relative overflow-hidden flex items-center justify-center">
                                         {imgSrc ? (
-                                            <img src={imgSrc} alt={product.name} className="w-full h-full object-cover group-hover/card:scale-110 transition-transform duration-700" />
+                                            <img src={imgSrc} alt={product.name} className="w-full h-full object-contain group-hover/card:scale-110 transition-transform duration-700" />
                                         ) : (
                                             <Package className="w-10 h-10 text-gray-200 dark:text-slate-700" />
                                         )}
