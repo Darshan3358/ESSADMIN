@@ -335,7 +335,7 @@ const getDashboardStats = asyncHandler(async (req, res) => {
         Withdraw.countDocuments({ status: 0 }),
         Recharge.aggregate([
             { $match: { status: 1 } },
-            { $group: { _id: null, total: { $sum: { $convert: { input: "$amount", to: "double", onError: 0, onNull: 0 } } } } }
+            { $group: { _id: null, total: { $sum: "$amount" } } }
         ]),
         Order.countDocuments({ createdAt: { $gte: startOfMonth } }),
         Seller.countDocuments({ role: 'seller', createdAt: { $gte: startOfMonth } }),
@@ -344,8 +344,8 @@ const getDashboardStats = asyncHandler(async (req, res) => {
             {
                 $group: {
                     _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
-                    sales: { $sum: { $convert: { input: "$order_total", to: "double", onError: 0, onNull: 0 } } },
-                    profit: { $sum: { $subtract: [{ $convert: { input: "$order_total", to: "double", onError: 0, onNull: 0 } }, { $convert: { input: "$cost_amount", to: "double", onError: 0, onNull: 0 } }] } },
+                    sales: { $sum: "$order_total" },
+                    profit: { $sum: { $subtract: ["$order_total", "$cost_amount"] } },
                     orders: { $sum: 1 }
                 }
             }

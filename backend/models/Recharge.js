@@ -11,8 +11,9 @@ const rechargeSchema = mongoose.Schema({
         required: true,
     },
     amount: {
-        type: String, // String in DB based on image "54.00000"
+        type: Number,
         required: true,
+        default: 0,
     },
     mode: {
         type: String,

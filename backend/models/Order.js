@@ -32,9 +32,9 @@ const orderSchema = mongoose.Schema({
         required: false,
     },
     order_total: {
-        type: mongoose.Schema.Types.Mixed,
+        type: Number,
         required: true,
-        default: "0.00",
+        default: 0,
     },
     cost_amount: {
         type: Number,

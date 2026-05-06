@@ -2,12 +2,24 @@ const asyncHandler = require('express-async-handler');
 const RegCode = require('../models/RegCode');
 const SiteSetting = require('../models/SiteSetting');
 
+const inviteCache = new Map();
+const INVITE_CACHE_DURATION = 30 * 1000;
+
 // @desc    List all invite codes (with used/unused status)
 // @route   GET /api/settings/invite-codes
 // @access  Private/Admin
 const listInviteCodes = asyncHandler(async (req, res) => {
+    const cacheKey = 'all_invites';
+    const cached = inviteCache.get(cacheKey);
+    if (cached && (Date.now() - cached.timestamp < INVITE_CACHE_DURATION)) {
+        return res.json(cached.data);
+    }
+
     const codes = await RegCode.find({}).sort({ createdAt: -1 });
-    res.json({ success: true, codes });
+    const responseData = { success: true, codes };
+    
+    inviteCache.set(cacheKey, { data: responseData, timestamp: Date.now() });
+    res.json(responseData);
 });
 
 // @desc    Get current (first unused) invite code — kept for legacy frontend
