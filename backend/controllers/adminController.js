@@ -291,9 +291,26 @@ const deletePackagePlan = asyncHandler(async (req, res) => {
 // @desc    Get admin dashboard stats
 // @route   GET /api/admin/stats
 // @access  Private/Admin
+const statsCache = new Map();
+const CACHE_DURATION = 60 * 1000; // 1 minute cache
+
 const getDashboardStats = asyncHandler(async (req, res) => {
     const range = req.query.range || '7days';
+    const cacheKey = `admin_stats_${range}`;
 
+    // 1. Cache Check
+    const cached = statsCache.get(cacheKey);
+    if (cached && (Date.now() - cached.timestamp < CACHE_DURATION)) {
+        return res.json({ success: true, stats: cached.data });
+    }
+
+    const now = new Date();
+    const startOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+    const days = range === '30days' ? 30 : (range === '6months' ? 180 : (range === '12months' ? 365 : 7));
+    const startDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    startDate.setUTCDate(startDate.getUTCDate() - (days - 1));
+
+    // 2. Parallel Execution of ALL DB queries
     const [
         totalUsers,
         totalProducts,
@@ -303,7 +320,10 @@ const getDashboardStats = asyncHandler(async (req, res) => {
         totalPackages,
         pendingRecharges,
         pendingWithdrawals,
-        rechargeRevenue
+        rechargeRevenue,
+        ordersThisMonth,
+        newSellers,
+        rawStatsResult
     ] = await Promise.all([
         Seller.countDocuments({ role: 'seller' }),
         Product.countDocuments({ isDeleted: { $ne: true } }),
@@ -316,39 +336,20 @@ const getDashboardStats = asyncHandler(async (req, res) => {
         Recharge.aggregate([
             { $match: { status: 1 } },
             { $group: { _id: null, total: { $sum: { $convert: { input: "$amount", to: "double", onError: 0, onNull: 0 } } } } }
-        ])
-    ]);
-
-    const totalRevenue = rechargeRevenue.length > 0 ? rechargeRevenue[0].total : 0;
-
-    // Orders this month
-    const now = new Date();
-    const startOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
-    
-    const [ordersThisMonth, newSellers] = await Promise.all([
+        ]),
         Order.countDocuments({ createdAt: { $gte: startOfMonth } }),
-        Seller.countDocuments({ role: 'seller', createdAt: { $gte: startOfMonth } })
-    ]);
-
-    // Chart data based on range
-    // Chart data based on range
-    const days = range === '30days' ? 30 : (range === '6months' ? 180 : (range === '12months' ? 365 : 7));
-    const chartData = [];
-    
-    // Calculate startDate in UTC using the 'now' variable defined above
-    const startDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-    startDate.setUTCDate(startDate.getUTCDate() - (days - 1));
-
-    const rawStatsResult = await Order.aggregate([
-        { $match: { createdAt: { $gte: startDate }, status: { $nin: ['cancelled', 'Cancelled'] } } },
-        {
-            $group: {
-                _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
-                sales: { $sum: { $convert: { input: "$order_total", to: "double", onError: 0, onNull: 0 } } },
-                profit: { $sum: { $subtract: [{ $convert: { input: "$order_total", to: "double", onError: 0, onNull: 0 } }, { $convert: { input: "$cost_amount", to: "double", onError: 0, onNull: 0 } }] } },
-                orders: { $sum: 1 }
+        Seller.countDocuments({ role: 'seller', createdAt: { $gte: startOfMonth } }),
+        Order.aggregate([
+            { $match: { createdAt: { $gte: startDate }, status: { $nin: ['cancelled', 'Cancelled'] } } },
+            {
+                $group: {
+                    _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+                    sales: { $sum: { $convert: { input: "$order_total", to: "double", onError: 0, onNull: 0 } } },
+                    profit: { $sum: { $subtract: [{ $convert: { input: "$order_total", to: "double", onError: 0, onNull: 0 } }, { $convert: { input: "$cost_amount", to: "double", onError: 0, onNull: 0 } }] } },
+                    orders: { $sum: 1 }
+                }
             }
-        }
+        ])
     ]);
 
     const statsMap = {};
@@ -393,25 +394,30 @@ const getDashboardStats = asyncHandler(async (req, res) => {
         });
     }
 
+    const stats = {
+        totalUsers,
+        totalProducts,
+        totalOrders,
+        totalRecharges,
+        totalWithdrawals,
+        totalPackages,
+        pendingRecharges,
+        pendingWithdrawals,
+        totalRevenue,
+        ordersThisMonth,
+        newSellers,
+        chartData,
+        // Consistency aliases
+        total_products: totalProducts,
+        productCount: totalProducts
+    };
+
+    // Save to Cache
+    statsCache.set(cacheKey, { data: stats, timestamp: Date.now() });
+
     res.json({
         success: true,
-        stats: {
-            totalUsers,
-            totalProducts,
-            totalOrders,
-            totalRecharges,
-            totalWithdrawals,
-            totalPackages,
-            pendingRecharges,
-            pendingWithdrawals,
-            totalRevenue,
-            ordersThisMonth,
-            newSellers,
-            chartData,
-            // Consistency aliases
-            total_products: totalProducts,
-            productCount: totalProducts
-        }
+        stats
     });
 });
 
