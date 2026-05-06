@@ -300,9 +300,9 @@ const getDashboardStats = asyncHandler(async (req, res) => {
     const mongoUri = process.env.MONGO_URI || 'not set';
     console.log(`[AdminStats] MONGO_URI Host: ${mongoUri.split('@')[1]?.split('/')[0] || 'localhost'}`);
 
-    // 1. Cache Check (Enabled for performance)
+    // 1. Cache Check (Strict 5 min cache)
     const cached = statsCache.get(cacheKey);
-    if (cached && (Date.now() - cached.timestamp < 5 * 60 * 1000)) { // 5 min cache
+    if (cached && (Date.now() - cached.timestamp < 5 * 60 * 1000)) {
         return res.json({ success: true, stats: cached.data });
     }
 
@@ -313,9 +313,8 @@ const getDashboardStats = asyncHandler(async (req, res) => {
             (range === '12months' || range === '1Y') ? 365 : 7;
     const startDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
     startDate.setUTCDate(startDate.getUTCDate() - (days - 1));
-    console.log(`[AdminStats] Fetching for range: ${range} (days: ${days})`);
 
-    // 2. Parallel Execution of ALL DB queries
+    // 2. Parallel Execution with optimized methods
     const [
         totalUsers,
         totalProducts,
@@ -332,23 +331,23 @@ const getDashboardStats = asyncHandler(async (req, res) => {
     ] = await Promise.all([
         Seller.countDocuments({ role: 'seller' }),
         Product.countDocuments({ isDeleted: { $ne: true } }),
-        Order.countDocuments({}),
-        Recharge.countDocuments({}),
-        Withdraw.countDocuments({}),
-        Package.countDocuments({}),
+        Order.estimatedDocumentCount(),
+        Recharge.estimatedDocumentCount(),
+        Withdraw.estimatedDocumentCount(),
+        Package.estimatedDocumentCount(),
         Recharge.countDocuments({ status: 0 }),
         Withdraw.countDocuments({ status: 0 }),
         Recharge.aggregate([
             { $match: { status: 1 } },
             { $group: { _id: null, total: { $sum: "$amount" } } }
-        ]),
+        ]).then(res => res[0]?.total || 0),
         Order.countDocuments({ createdAt: { $gte: startOfMonth } }),
         Seller.countDocuments({ role: 'seller', createdAt: { $gte: startOfMonth } }),
         Order.aggregate([
             { 
                 $match: { 
                     createdAt: { $gte: startDate }, 
-                    status: { $nin: ['cancelled', 'Cancelled'] } 
+                    status: { $ne: 'cancelled' } 
                 } 
             },
             {
@@ -362,8 +361,7 @@ const getDashboardStats = asyncHandler(async (req, res) => {
         ])
     ]);
 
-    console.log(`[AdminStats] Results -> Sellers: ${totalUsers}, Products: ${totalProducts}, Orders: ${totalOrders}`);
-    const totalRevenue = rechargeRevenue.length > 0 ? rechargeRevenue[0].total : 0;
+    const totalRevenue = rechargeRevenue;
     const statsMap = {};
     rawStatsResult.forEach(item => { statsMap[item._id] = item; });
     const chartData = [];
@@ -423,14 +421,11 @@ const getDashboardStats = asyncHandler(async (req, res) => {
         productCount: totalProducts
     };
 
-    // Save to Cache
     statsCache.set(cacheKey, { data: stats, timestamp: Date.now() });
 
     res.json({
         success: true,
         stats,
-        _debug_ts: Date.now(),
-        db_host: (process.env.MONGO_URI || '').split('@')[1]?.split('/')[0] || 'localhost',
         raw_counts: {
             sellers: totalUsers,
             products: totalProducts,
