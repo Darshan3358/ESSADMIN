@@ -35,17 +35,25 @@ export default function TawkChat() {
         // Update User Identity when user object changes
         // @ts-ignore
         if (user && window.Tawk_API) {
+            const visitorData = {
+                'name': user.shop_name || user.name || 'Seller',
+                'email': user.email,
+                'shop_name': user.shop_name || 'N/A',
+                'shop_logo': user.shop_logo || '',
+                'seller_id': user._id
+            };
+
+            // Set visitor object for early identification
+            // @ts-ignore
+            window.Tawk_API.visitor = {
+                name: visitorData.name,
+                email: visitorData.email
+            };
+
             // @ts-ignore
             window.Tawk_API.onLoad = function() {
                 // @ts-ignore
-                window.Tawk_API.setAttributes({
-                    'name': user.name || user.shop_name || 'Seller',
-                    'email': user.email,
-                    'shop_name': user.shop_name || 'N/A',
-                    'shop_logo': user.shop_logo || '',
-                    'seller_id': user._id,
-                    'hash': 'visitor-authenticated'
-                }, function(error: any) {
+                window.Tawk_API.setAttributes(visitorData, function(error: any) {
                     if (error) console.error('Tawk error:', error);
                 });
             };
@@ -54,13 +62,7 @@ export default function TawkChat() {
             // @ts-ignore
             if (typeof window.Tawk_API.setAttributes === 'function') {
                 // @ts-ignore
-                window.Tawk_API.setAttributes({
-                    'name': user.name || user.shop_name || 'Seller',
-                    'email': user.email,
-                    'shop_name': user.shop_name || 'N/A',
-                    'shop_logo': user.shop_logo || '',
-                    'seller_id': user._id
-                });
+                window.Tawk_API.setAttributes(visitorData);
             }
         }
     }, [user]);
