@@ -11,12 +11,26 @@ const Package = require('../models/Package');
 const PackagePlan = require('../models/PackagePlan');
 const { getAvailableBalance } = require('../utils/wallet');
 
+const statsCache = new Map();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
+
 // @desc    Get seller dashboard statistics
 // @route   GET /api/sellers/stats
 // @access  Private
 exports.getDashboardStats = async (req, res) => {
     try {
         const sellerId = req.user._id;
+        const days = parseInt(req.query.days) || 7;
+        const cacheKey = `${sellerId}_${days}`;
+        
+        const cached = statsCache.get(cacheKey);
+        if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+            return res.status(200).json({
+                success: true,
+                stats: cached.data
+            });
+        }
+
         const seller = await Seller.findById(sellerId).lean();
 
         if (!seller) {
@@ -273,31 +287,35 @@ exports.getDashboardStats = async (req, res) => {
             });
         }
 
+        const finalStats = {
+            totalProducts,
+            totalOrders,
+            pendingOrdersCount,
+            totalSales: allTimeSales,
+            todaySales: todayData.sales,
+            thisMonthSales: thisMonthData.sales,
+            lastMonthSales: lastMonthData.sales,
+            netProfit,
+            netProfitMargin,
+            guaranteeMoney: seller.guarantee_balance || guaranteeMoney,
+            mainWallet: availableBalance,
+            productLimit,
+            remainingProducts,
+            planName: activePackage ? activePackage.type : 'N/A',
+            planFeatures, // New field for frontend
+            views: seller.views || productLimit || 0,
+            used_views: seller.used_views || totalProducts,
+            remaining_views: Math.max(0, (productLimit || 0) - totalProducts),
+            categoryCounts,
+            chartData,
+            shopLogo: shopProfile ? shopProfile.shop_logo : ''
+        };
+
+        statsCache.set(cacheKey, { timestamp: Date.now(), data: finalStats });
+
         res.status(200).json({
             success: true,
-            stats: {
-                totalProducts,
-                totalOrders,
-                pendingOrdersCount,
-                totalSales: allTimeSales,
-                todaySales: todayData.sales,
-                thisMonthSales: thisMonthData.sales,
-                lastMonthSales: lastMonthData.sales,
-                netProfit,
-                netProfitMargin,
-                guaranteeMoney: seller.guarantee_balance || guaranteeMoney,
-                mainWallet: availableBalance,
-                productLimit,
-                remainingProducts,
-                planName: activePackage ? activePackage.type : 'N/A',
-                planFeatures, // New field for frontend
-                views: seller.views || productLimit || 0,
-                used_views: seller.used_views || totalProducts,
-                remaining_views: Math.max(0, (productLimit || 0) - totalProducts),
-                categoryCounts,
-                chartData,
-                shopLogo: shopProfile ? shopProfile.shop_logo : ''
-            }
+            stats: finalStats
         });
     } catch (error) {
         console.error(error);
