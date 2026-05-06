@@ -222,7 +222,7 @@ function StorehousePageInner() {
                                 </div>
                                 <p className="font-black text-lg tracking-tight">{t('Loading storehouse products...')}</p>
                             </div>
-                        ) : filteredProducts.length === 0 ? (
+                        ) : products.length === 0 ? (
                             <div className="glass-card p-24 text-center flex flex-col items-center gap-6 !bg-white/60 dark:!bg-slate-900/60">
                                 <div className="p-6 bg-gray-50 dark:bg-slate-800 rounded-full">
                                     <Package className="w-20 h-20 text-gray-200 dark:text-slate-700" />
