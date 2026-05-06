@@ -296,6 +296,12 @@ export default function AdminDashboardPage() {
                     <div className="w-2 h-8 bg-blue-500 rounded-full" />
                     Quick Actions
                 </h2>
+                <div className="bg-red-900/20 p-4 rounded-xl border border-red-500/30 mb-8 text-xs font-mono text-red-200">
+                    <p>DEBUG INFO (Live from Backend):</p>
+                    <p>DB Host: {(stats as any)?.db_host || 'Loading...'}</p>
+                    <p>Raw Counts: {JSON.stringify((stats as any)?.raw_counts || {})}</p>
+                    <p>Total Sellers Field: {stats?.totalUsers}</p>
+                </div>
                 <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-6 gap-3 lg:gap-4">
                     {[
                         { label: 'Manage Users', href: '/admin/dashboard/users', color: '#3b82f6', icon: Users },
