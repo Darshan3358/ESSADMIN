@@ -298,11 +298,14 @@ const getDashboardStats = asyncHandler(async (req, res) => {
     const range = req.query.range || '7days';
     const cacheKey = `admin_stats_${range}`;
 
-    // 1. Cache Check
+    // 1. Cache Check (Temporarily disabled for debugging)
+    /*
     const cached = statsCache.get(cacheKey);
     if (cached && (Date.now() - cached.timestamp < CACHE_DURATION)) {
         return res.json({ success: true, stats: cached.data });
     }
+    */
+    console.log(`[AdminStats] Fetching for range: ${range} (days: ${days})`);
 
     const now = new Date();
     const startOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
@@ -353,6 +356,7 @@ const getDashboardStats = asyncHandler(async (req, res) => {
             }
         ])
     ]);
+    console.log(`[AdminStats] Results -> Sellers: ${totalUsers}, Products: ${totalProducts}, Orders: ${totalOrders}`);
     const totalRevenue = rechargeRevenue.length > 0 ? rechargeRevenue[0].total : 0;
     const statsMap = {};
     rawStatsResult.forEach(item => { statsMap[item._id] = item; });
