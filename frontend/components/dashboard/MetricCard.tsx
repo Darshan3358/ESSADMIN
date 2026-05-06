@@ -91,7 +91,7 @@ export function TodaySalesCard({ amount, change }: { amount: number; change: num
     React.useEffect(() => {
         const interval = setInterval(() => {
             setRandomVal(Math.floor(Math.random() * 900) + 100);
-        }, 100000); // Changes every 5 seconds
+        }, 300000); // Changes every 5 minutes
         return () => clearInterval(interval);
     }, []);
 
