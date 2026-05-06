@@ -340,8 +340,18 @@ const getMyOrders = asyncHandler(async (req, res) => {
 // @desc    Get all orders
 // @route   GET /api/orders
 // @access  Private/Admin
+const adminOrderCache = new Map();
+const ADMIN_CACHE_DURATION = 30 * 1000;
+
 const getOrders = asyncHandler(async (req, res) => {
     const APIFeatures = require('../utils/apiFeatures');
+    const { page, limit, keyword, status } = req.query;
+    const cacheKey = `admin_orders_${page}_${limit}_${keyword}_${status}`;
+
+    const cached = adminOrderCache.get(cacheKey);
+    if (cached && (Date.now() - cached.timestamp < ADMIN_CACHE_DURATION)) {
+        return res.json(cached.data);
+    }
 
     let query = Order.find({}).populate('seller_id', 'id name');
 
@@ -386,12 +396,16 @@ const getOrders = asyncHandler(async (req, res) => {
     }
     const total = await countQuery.countDocuments();
 
-    res.json({
+    const responseData = {
         orders,
         page: Number(req.query.page) || 1,
         pages: Math.ceil(total / (Number(req.query.limit) || 100)),
         total
-    });
+    };
+
+    adminOrderCache.set(cacheKey, { data: responseData, timestamp: Date.now() });
+
+    res.json(responseData);
 });
 
 // @desc    Update order

@@ -24,8 +24,16 @@ async function createIndexes() {
 
         console.log('Creating Recharge & Withdraw indexes...');
         await Recharge.collection.createIndex({ status: 1 });
+        await Recharge.collection.createIndex({ createdAt: -1 });
         await Withdraw.collection.createIndex({ status: 1 });
+        await Withdraw.collection.createIndex({ createdAt: -1 });
         console.log('Recharge & Withdraw indexes created.');
+
+        console.log('Creating Seller indexes...');
+        const Seller = require('./models/Seller');
+        await Seller.collection.createIndex({ role: 1 });
+        await Seller.collection.createIndex({ createdAt: -1 });
+        console.log('Seller indexes created.');
 
     } catch (err) {
         console.error('Error creating indexes:', err);

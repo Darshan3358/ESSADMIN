@@ -351,7 +351,7 @@ const getDashboardStats = asyncHandler(async (req, res) => {
             }
         ])
     ]);
-
+    const totalRevenue = rechargeRevenue.length > 0 ? rechargeRevenue[0].total : 0;
     const statsMap = {};
     rawStatsResult.forEach(item => { statsMap[item._id] = item; });
 
