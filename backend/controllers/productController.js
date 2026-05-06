@@ -563,6 +563,14 @@ const serveProductImage = asyncHandler(async (req, res) => {
     res.send(buffer);
 });
 
+// @desc    Get all unique categories
+// @route   GET /api/products/categories
+// @access  Public
+const getProductCategories = asyncHandler(async (req, res) => {
+    const categories = await Product.distinct('category', { isDeleted: { $ne: true } });
+    res.json({ success: true, data: categories });
+});
+
 module.exports = {
     getProducts,
     getProductById,
@@ -574,6 +582,7 @@ module.exports = {
     addToMyStore,
     removeFromStore,
     getFeaturedProducts,
-    serveProductImage
+    serveProductImage,
+    getProductCategories
 };
 

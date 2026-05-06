@@ -24,8 +24,10 @@ function StorehousePageInner() {
     const [addError, setAddError] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
     const [selectedCategory, setSelectedCategory] = useState('All');
+    const [totalProducts, setTotalProducts] = useState(0);
+    const [categories, setCategories] = useState<{name: string, count?: number}[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
-    const PRODUCTS_PER_PAGE = 9;
+    const PRODUCTS_PER_PAGE = 12; // Increased to 12 for better layout
 
     useEffect(() => {
         if (!authLoading && !user) {
@@ -36,17 +38,21 @@ function StorehousePageInner() {
     const fetchData = async () => {
         setIsLoading(true);
         try {
-            // Fetch all products from the global storehouse
-            const storeRes = await api.get('/products?limit=1000');
-            if (storeRes.success) {
-                setProducts(storeRes.data || []);
+            // 1. Fetch categories and my-product-ids (parallel)
+            const [catRes, myRes] = await Promise.all([
+                api.get('/products/categories'),
+                api.get('/products/my-product-ids')
+            ]);
+
+            if (catRes.success) {
+                setCategories(catRes.data.map((cat: string) => ({ name: cat })));
             }
-            // Fetch the products the seller has already added (Just IDs for performance)
-            const myRes = await api.get('/products/my-product-ids');
             if (myRes.success) {
-                const ids = new Set<string>(myRes.data || []);
-                setAddedProductIds(ids);
+                setAddedProductIds(new Set(myRes.data || []));
             }
+
+            // 2. Initial product fetch
+            await fetchProducts(1);
         } catch (error) {
             console.error('Failed to fetch storehouse data:', error);
         } finally {
@@ -54,9 +60,32 @@ function StorehousePageInner() {
         }
     };
 
+    const fetchProducts = async (page: number) => {
+        try {
+            let url = `/products?page=${page}&limit=${PRODUCTS_PER_PAGE}`;
+            if (selectedCategory !== 'All') url += `&category=${encodeURIComponent(selectedCategory)}`;
+            if (searchQuery) url += `&keyword=${encodeURIComponent(searchQuery)}`;
+
+            const res = await api.get(url);
+            if (res.success) {
+                setProducts(res.data || []);
+                // If the backend doesn't return totalCount, we fallback to a reasonable number or handle it
+                setTotalProducts(res.totalCount || res.count || (res.data.length * 10)); // Adjust based on API
+            }
+        } catch (error) {
+            console.error('Error fetching products:', error);
+        }
+    };
+
     useEffect(() => {
         if (user) fetchData();
     }, [user]);
+
+    useEffect(() => {
+        if (user && !isLoading) {
+            fetchProducts(currentPage);
+        }
+    }, [currentPage, selectedCategory, searchQuery]);
 
     const handleAddToStore = async (product: any) => {
         setAddingId(product._id);
@@ -79,27 +108,11 @@ function StorehousePageInner() {
         }
     };
 
-    // Derive categories
-    const categoryMap = products.reduce((acc: Record<string, number>, p: any) => {
-        const cat = p.category || 'Uncategorized';
-        acc[cat] = (acc[cat] || 0) + 1;
-        return acc;
-    }, {});
-    const allCategories = Object.entries(categoryMap).map(([name, count]) => ({ name, count }));
+    // Use fetched categories instead of deriving from local products
+    const allCategories = categories;
 
-    const filteredProducts = products
-        .filter(p => selectedCategory === 'All' || p.category === selectedCategory)
-        .filter(p => {
-            if (!searchQuery) return true;
-            const q = searchQuery.toLowerCase();
-            return (p.name || '').toLowerCase().includes(q) || (p.category || '').toLowerCase().includes(q);
-        });
-
-    const totalPages = Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE);
-    const paginatedProducts = filteredProducts.slice(
-        (currentPage - 1) * PRODUCTS_PER_PAGE,
-        currentPage * PRODUCTS_PER_PAGE
-    );
+    const totalPages = Math.ceil(totalProducts / PRODUCTS_PER_PAGE);
+    const paginatedProducts = products;
 
     useEffect(() => {
         setCurrentPage(1);
