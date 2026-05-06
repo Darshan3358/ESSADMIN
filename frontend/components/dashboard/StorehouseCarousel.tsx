@@ -140,7 +140,17 @@ export default function StorehouseCarousel({ onProductAdded }: StorehouseCarouse
                                     {/* Image Section */}
                                     <div className="h-48 bg-gray-50 dark:bg-slate-800/50 relative overflow-hidden flex items-center justify-center">
                                         {imgSrc ? (
-                                            <Image src={imgSrc} alt={product.name} fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw" className="object-contain group-hover/card:scale-110 transition-transform duration-700" />
+                                            <Image 
+                                                src={imgSrc} 
+                                                alt={product.name} 
+                                                fill 
+                                                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw" 
+                                                className="object-contain group-hover/card:scale-110 transition-transform duration-700"
+                                                onError={(e) => {
+                                                    (e.target as HTMLImageElement).srcset = '';
+                                                    (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=1000&auto=format&fit=crop';
+                                                }}
+                                            />
                                         ) : (
                                             <Package className="w-10 h-10 text-gray-200 dark:text-slate-700" />
                                         )}

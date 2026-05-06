@@ -237,7 +237,17 @@ function StorehousePageInner() {
                                             {/* Product Image */}
                                             <div className="h-32 sm:h-56 bg-gray-50 dark:bg-slate-800/50 flex items-center justify-center overflow-hidden relative group/img">
                                                 {imgSrc ? (
-                                                    <Image src={imgSrc} alt={product.name} fill sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw" className="object-contain group-hover/img:scale-110 transition-transform duration-700" />
+                                                    <Image 
+                                                        src={imgSrc} 
+                                                        alt={product.name} 
+                                                        fill 
+                                                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw" 
+                                                        className="object-contain group-hover/img:scale-110 transition-transform duration-700"
+                                                        onError={(e) => {
+                                                            (e.target as HTMLImageElement).srcset = '';
+                                                            (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=1000&auto=format&fit=crop';
+                                                        }}
+                                                    />
                                                 ) : (
                                                     <Tag className="w-8 h-8 sm:w-12 sm:h-12 text-gray-200 dark:text-slate-700" />
                                                 )}
