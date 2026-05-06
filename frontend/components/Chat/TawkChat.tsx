@@ -42,6 +42,7 @@ export default function TawkChat() {
                     'name': user.name || user.shop_name || 'Seller',
                     'email': user.email,
                     'shop_name': user.shop_name || 'N/A',
+                    'shop_logo': user.shop_logo || '',
                     'seller_id': user._id,
                     'hash': 'visitor-authenticated'
                 }, function(error: any) {
@@ -57,6 +58,7 @@ export default function TawkChat() {
                     'name': user.name || user.shop_name || 'Seller',
                     'email': user.email,
                     'shop_name': user.shop_name || 'N/A',
+                    'shop_logo': user.shop_logo || '',
                     'seller_id': user._id
                 });
             }
