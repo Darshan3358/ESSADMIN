@@ -844,6 +844,9 @@ const getAllOrders = asyncHandler(async (req, res) => {
     const total = await Order.countDocuments(filter);
     const orders = await Order.aggregate([
         { $match: filter },
+        { $sort: { createdAt: -1 } },
+        { $skip: skip },
+        { $limit: limit },
         {
             $lookup: {
                 from: 'sellers',
@@ -862,10 +865,7 @@ const getAllOrders = asyncHandler(async (req, res) => {
                 status: 1, pick_up_status: 1, payment_status: 1, createdAt: 1,
                 seller: { name: '$seller_data.name', email: '$seller_data.email', shop_name: '$seller_data.shop_name' }
             }
-        },
-        { $sort: { createdAt: -1 } },
-        { $skip: skip },
-        { $limit: limit }
+        }
     ]);
 
     res.json({ success: true, orders, total, page, pages: Math.ceil(total / limit) });
