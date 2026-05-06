@@ -59,7 +59,7 @@ export default function AdminPackagePlansPage() {
 
     const fetchPlans = useCallback(async () => {
         setLoading(true);
-        const token = localStorage.getItem('adminToken');
+        const token = sessionStorage.getItem('adminToken');
         try {
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/package-plans`, {
                 headers: { Authorization: `Bearer ${token}` }
@@ -81,7 +81,7 @@ export default function AdminPackagePlansPage() {
     };
 
     const handleSave = async () => {
-        const token = localStorage.getItem('adminToken');
+        const token = sessionStorage.getItem('adminToken');
         try {
             const body = {
                 ...editForm,
@@ -109,7 +109,7 @@ export default function AdminPackagePlansPage() {
 
     const handleDelete = async (id: string) => {
         if (!confirm('Are you sure you want to delete this plan?')) return;
-        const token = localStorage.getItem('adminToken');
+        const token = sessionStorage.getItem('adminToken');
         try {
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/package-plans/${id}`, {
                 method: 'DELETE',
@@ -125,7 +125,7 @@ export default function AdminPackagePlansPage() {
     };
 
     const handleAdd = async () => {
-        const token = localStorage.getItem('adminToken');
+        const token = sessionStorage.getItem('adminToken');
         try {
             const body = {
                 ...addForm,

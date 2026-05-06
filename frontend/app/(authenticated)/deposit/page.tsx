@@ -135,7 +135,7 @@ export default function DepositPage() {
         setPayStep('confirming');
         try {
             const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-            const token = localStorage.getItem('token');
+            const token = sessionStorage.getItem('token');
 
             const formData = new FormData();
             formData.append('trans_password', transPassword);

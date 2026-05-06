@@ -26,7 +26,7 @@ export default function RootLayout({
                         __html: `
                             (function() {
                                 try {
-                                    const user = JSON.parse(localStorage.getItem('user'));
+                                    const user = JSON.parse(sessionStorage.getItem('user'));
                                     if (user && user.settings && user.settings.theme === 'dark') {
                                         document.documentElement.classList.add('dark');
                                     } else {

@@ -36,7 +36,7 @@ export default function AdminWithdrawPage() {
 
     const fetchWithdrawals = useCallback(async () => {
         setLoading(true);
-        const token = localStorage.getItem('adminToken');
+        const token = sessionStorage.getItem('adminToken');
         try {
             const res = await fetch(
                 `${process.env.NEXT_PUBLIC_API_URL}/admin/withdrawals?page=${page}&status=${statusFilter}`,
@@ -59,7 +59,7 @@ export default function AdminWithdrawPage() {
 
     const handleStatus = async (id: string, status: number, reason?: string) => {
         setActionLoading(id);
-        const token = localStorage.getItem('adminToken');
+        const token = sessionStorage.getItem('adminToken');
         try {
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/withdrawals/${id}`, {
                 method: 'PUT',

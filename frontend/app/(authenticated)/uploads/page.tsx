@@ -44,7 +44,7 @@ export default function UploadsPage() {
     const fetchFiles = useCallback(async () => {
         setLoading(true);
         try {
-            const token = localStorage.getItem('token');
+            const token = sessionStorage.getItem('token');
             const res = await fetch(`${BACKEND_URL}/uploads`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -75,7 +75,7 @@ export default function UploadsPage() {
         formData.append('file', file);
 
         try {
-            const token = localStorage.getItem('token');
+            const token = sessionStorage.getItem('token');
             const res = await fetch(`${BACKEND_URL}/uploads`, {
                 method: 'POST',
                 headers: { Authorization: `Bearer ${token}` },
@@ -100,7 +100,7 @@ export default function UploadsPage() {
         if (!confirm(`Delete "${filename}"? This cannot be undone.`)) return;
         setDeletingFile(filename);
         try {
-            const token = localStorage.getItem('token');
+            const token = sessionStorage.getItem('token');
             const res = await fetch(`${BACKEND_URL}/uploads/${filename}`, {
                 method: 'DELETE',
                 headers: { Authorization: `Bearer ${token}` },

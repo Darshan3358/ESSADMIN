@@ -47,7 +47,7 @@ function AdminProductsPage() {
 
     const fetchProducts = useCallback(async () => {
         setLoading(true);
-        const token = localStorage.getItem('adminToken');
+        const token = sessionStorage.getItem('adminToken');
         const params = new URLSearchParams({ page: String(page), keyword, category: catFilter });
         if (sellerIdParam) params.set('seller_id', sellerIdParam);
         const res = await fetch(`${API}/admin/products?${params}`, {
@@ -160,7 +160,7 @@ function AdminProductsPage() {
         }
 
         setSaving(true);
-        const token = localStorage.getItem('adminToken');
+        const token = sessionStorage.getItem('adminToken');
 
         try {
             let res;
@@ -210,7 +210,7 @@ function AdminProductsPage() {
     const handleDelete = async (id: string, name: string) => {
         if (!confirm(`Remove "${name}" from storehouse?`)) return;
         setActionLoading(id);
-        const token = localStorage.getItem('adminToken');
+        const token = sessionStorage.getItem('adminToken');
         await fetch(`${API}/admin/products/${id}`, {
             method: 'DELETE', headers: { Authorization: `Bearer ${token}` }
         });

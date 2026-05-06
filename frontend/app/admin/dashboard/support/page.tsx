@@ -22,7 +22,7 @@ export default function AdminSupportPage() {
     const fetchTickets = useCallback(async () => {
         setLoading(true);
         try {
-            const token = localStorage.getItem('adminToken');
+            const token = sessionStorage.getItem('adminToken');
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/support`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -46,7 +46,7 @@ export default function AdminSupportPage() {
         if (!selectedTicket) return;
         setIsUpdating(true);
         try {
-            const token = localStorage.getItem('adminToken');
+            const token = sessionStorage.getItem('adminToken');
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/support/${selectedTicket._id}`, {
                 method: 'PUT',
                 headers: {

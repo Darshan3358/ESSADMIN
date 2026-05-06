@@ -32,7 +32,7 @@ export default function AdminRechargePage() {
 
     const fetchRecharges = useCallback(async () => {
         setLoading(true);
-        const token = localStorage.getItem('adminToken');
+        const token = sessionStorage.getItem('adminToken');
         const url = `${process.env.NEXT_PUBLIC_API_URL}/admin/recharges?page=${page}&status=${statusFilter}`;
         const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
         const data = await res.json();
@@ -48,7 +48,7 @@ export default function AdminRechargePage() {
 
     const handleStatus = async (id: string, status: number, reason?: string) => {
         setActionLoading(id);
-        const token = localStorage.getItem('adminToken');
+        const token = sessionStorage.getItem('adminToken');
         await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/recharges/${id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },

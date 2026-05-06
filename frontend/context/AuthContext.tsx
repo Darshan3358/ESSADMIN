@@ -53,8 +53,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
 
     useEffect(() => {
-        const storedToken = localStorage.getItem('token');
-        const storedUser = localStorage.getItem('user');
+        const storedToken = sessionStorage.getItem('token');
+        const storedUser = sessionStorage.getItem('user');
 
         if (storedToken && storedUser && storedUser !== 'undefined') {
             try {
@@ -67,13 +67,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     if (res && res._id) {
                         const updatedUser = { ...parsedUser, ...res };
                         setUser(updatedUser);
-                        localStorage.setItem('user', JSON.stringify(updatedUser));
+                        sessionStorage.setItem('user', JSON.stringify(updatedUser));
                     }
                 }).catch(err => {
                     console.error('Initial profile sync failed:', err.message);
                     if (err.message && err.message.includes('Not authorized')) {
-                        localStorage.removeItem('token');
-                        localStorage.removeItem('user');
+                        sessionStorage.removeItem('token');
+                        sessionStorage.removeItem('user');
                         setToken(null);
                         setUser(null);
                         router.push('/login');
@@ -81,8 +81,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 });
             } catch (error) {
                 console.error('Failed to parse stored user:', error);
-                localStorage.removeItem('token');
-                localStorage.removeItem('user');
+                sessionStorage.removeItem('token');
+                sessionStorage.removeItem('user');
             }
         }
         setIsLoading(false);
@@ -100,15 +100,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }, [user?.settings?.theme]);
 
     const handleAuthSuccess = (token: string, user: User) => {
-        localStorage.setItem('token', token);
-        localStorage.setItem('user', JSON.stringify(user));
+        sessionStorage.setItem('token', token);
+        sessionStorage.setItem('user', JSON.stringify(user));
 
         setToken(token);
         setUser(user);
 
         if (user.role === 'admin') {
-            localStorage.setItem('adminToken', token);
-            localStorage.setItem('adminUser', JSON.stringify(user));
+            sessionStorage.setItem('adminToken', token);
+            sessionStorage.setItem('adminUser', JSON.stringify(user));
             router.push('/admin/dashboard');
         } else {
             router.push('/dashboard');
@@ -183,14 +183,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (userData.settings) {
                 updated.settings = { ...(prev.settings || {}), ...userData.settings };
             }
-            localStorage.setItem('user', JSON.stringify(updated));
+            sessionStorage.setItem('user', JSON.stringify(updated));
             return updated;
         });
     };
 
     const logout = () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+        sessionStorage.removeItem('token');
+        sessionStorage.removeItem('user');
         setToken(null);
         setUser(null);
         router.push('/login');

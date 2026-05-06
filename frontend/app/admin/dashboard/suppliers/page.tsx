@@ -22,7 +22,7 @@ export default function AdminSuppliersPage() {
 
     const fetchSuppliers = useCallback(async () => {
         setIsLoading(true);
-        const token = localStorage.getItem('adminToken');
+        const token = sessionStorage.getItem('adminToken');
         try {
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/suppliers`, {
                 headers: {
@@ -76,7 +76,7 @@ export default function AdminSuppliersPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        const token = localStorage.getItem('adminToken');
+        const token = sessionStorage.getItem('adminToken');
         try {
             let res;
             if (editingSupplier) {
@@ -110,7 +110,7 @@ export default function AdminSuppliersPage() {
 
     const handleDelete = async (id: string) => {
         if (!window.confirm('Are you sure you want to delete this supplier?')) return;
-        const token = localStorage.getItem('adminToken');
+        const token = sessionStorage.getItem('adminToken');
         try {
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/suppliers/${id}`, {
                 method: 'DELETE',

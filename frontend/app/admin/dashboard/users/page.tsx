@@ -47,7 +47,7 @@ export default function AdminUsersPage() {
 
     const fetchUsers = useCallback(async () => {
         setLoading(true);
-        const token = localStorage.getItem('adminToken');
+        const token = sessionStorage.getItem('adminToken');
         const res = await fetch(
             `${process.env.NEXT_PUBLIC_API_URL}/admin/users?page=${page}&keyword=${keyword}&status=${statusFilter}`,
             { headers: { Authorization: `Bearer ${token}` } }
@@ -65,7 +65,7 @@ export default function AdminUsersPage() {
 
     const handleAction = async (id: string, updates: any) => {
         setActionLoading(id);
-        const token = localStorage.getItem('adminToken');
+        const token = sessionStorage.getItem('adminToken');
         try {
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/users/${id}`, {
                 method: 'PUT',
@@ -86,7 +86,7 @@ export default function AdminUsersPage() {
     const handleDelete = async (id: string, name: string) => {
         if (!confirm(`Delete user "${name}"? This cannot be undone.`)) return;
         setActionLoading(id);
-        const token = localStorage.getItem('adminToken');
+        const token = sessionStorage.getItem('adminToken');
         await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/users/${id}`, {
             method: 'DELETE', headers: { Authorization: `Bearer ${token}` }
         });
@@ -99,7 +99,7 @@ export default function AdminUsersPage() {
         setSaveError('');
         setSaveSuccess('');
         setActionLoading(editingUser._id);
-        const token = localStorage.getItem('adminToken');
+        const token = sessionStorage.getItem('adminToken');
         try {
             const payload: any = {
                 name: editingUser.name,

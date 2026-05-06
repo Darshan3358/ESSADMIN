@@ -44,8 +44,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         // Close sidebar by default on mobile
         if (window.innerWidth < 768) setSidebarOpen(false);
 
-        const token = localStorage.getItem('adminToken');
-        const user = localStorage.getItem('adminUser');
+        const token = sessionStorage.getItem('adminToken');
+        const user = sessionStorage.getItem('adminUser');
         if (!token || !user) {
             router.push('/admin');
             return;
@@ -58,8 +58,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }, []);
 
     const handleLogout = () => {
-        localStorage.removeItem('adminToken');
-        localStorage.removeItem('adminUser');
+        sessionStorage.removeItem('adminToken');
+        sessionStorage.removeItem('adminUser');
         router.push('/admin');
     };
 

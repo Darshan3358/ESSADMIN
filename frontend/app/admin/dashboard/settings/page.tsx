@@ -41,7 +41,7 @@ export default function AdminSettingsPage() {
     const [error, setError] = useState('');
 
     const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-    const getToken = () => localStorage.getItem('adminToken');
+    const getToken = () => sessionStorage.getItem('adminToken');
 
     const fetchSettings = async () => {
         setLoading(true);

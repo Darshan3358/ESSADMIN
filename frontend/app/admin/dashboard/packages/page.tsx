@@ -26,7 +26,7 @@ export default function AdminPackagesPage() {
 
     const fetchPackages = useCallback(async () => {
         setLoading(true);
-        const token = localStorage.getItem('adminToken');
+        const token = sessionStorage.getItem('adminToken');
         try {
             const res = await fetch(
                 `${process.env.NEXT_PUBLIC_API_URL}/admin/packages?page=${page}&status=all`,

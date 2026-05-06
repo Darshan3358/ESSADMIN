@@ -35,7 +35,7 @@ export default function ReportsPage() {
         setLoading(true);
         setError('');
         try {
-            const token = localStorage.getItem('token');
+            const token = sessionStorage.getItem('token');
             if (!token) { setError('Not authenticated'); setLoading(false); return; }
 
             const start = overrideStart !== undefined ? overrideStart : dateRange.start;

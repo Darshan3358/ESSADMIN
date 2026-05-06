@@ -19,7 +19,7 @@ function CodesContent() {
     const [error, setError] = useState('');
 
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
-    const getToken = () => typeof window !== 'undefined' ? localStorage.getItem('adminToken') : '';
+    const getToken = () => typeof window !== 'undefined' ? sessionStorage.getItem('adminToken') : '';
 
     const fetchCodes = async () => {
         setLoading(true);

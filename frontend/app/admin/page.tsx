@@ -40,8 +40,8 @@ export default function AdminLoginPage() {
                 throw new Error('Access denied. Admin account required.');
             }
 
-            localStorage.setItem('adminToken', data.token);
-            localStorage.setItem('adminUser', JSON.stringify(data.user));
+            sessionStorage.setItem('adminToken', data.token);
+            sessionStorage.setItem('adminUser', JSON.stringify(data.user));
             router.push('/admin/dashboard');
         } catch (err: any) {
             setError(err.message || 'Login failed');
@@ -70,8 +70,8 @@ export default function AdminLoginPage() {
                 throw new Error('Access denied. Only Admin can use this portal.');
             }
 
-            localStorage.setItem('adminToken', data.token);
-            localStorage.setItem('adminUser', JSON.stringify(data));
+            sessionStorage.setItem('adminToken', data.token);
+            sessionStorage.setItem('adminUser', JSON.stringify(data));
             router.push('/admin/dashboard');
         } catch (err: any) {
             setError(err.message);

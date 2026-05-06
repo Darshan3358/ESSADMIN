@@ -41,7 +41,7 @@ export default function AdminSellerReportsPage() {
         setLoading(true);
         setError('');
         try {
-            const token = localStorage.getItem('adminToken');
+            const token = sessionStorage.getItem('adminToken');
             const res = await fetch(
                 `${process.env.NEXT_PUBLIC_API_URL}/admin/seller-stats/${sellerId}?days=${period}`,
                 { headers: { Authorization: `Bearer ${token}` } }

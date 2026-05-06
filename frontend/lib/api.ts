@@ -45,11 +45,11 @@ export async function apiRequest(endpoint: string, options: RequestInit = {}) {
     }
 
     const fetchPromise = (async () => {
-        let token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+        let token = typeof window !== 'undefined' ? sessionStorage.getItem('token') : null;
         const isAdminPage = typeof window !== 'undefined' && window.location.pathname.includes('/admin');
         
         if (typeof window !== 'undefined' && (endpoint.startsWith('/admin') || isAdminPage)) {
-            const adminToken = localStorage.getItem('adminToken');
+            const adminToken = sessionStorage.getItem('adminToken');
             if (adminToken) {
                 token = adminToken;
             }

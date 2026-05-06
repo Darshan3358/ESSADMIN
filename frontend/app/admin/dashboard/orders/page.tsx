@@ -75,7 +75,7 @@ export default function AdminOrdersPage() {
     const [submitting, setSubmitting] = useState(false);
     const [formError, setFormError] = useState('');
 
-    const getToken = () => localStorage.getItem('adminToken');
+    const getToken = () => sessionStorage.getItem('adminToken');
 
     const fetchOrders = useCallback(async () => {
         setLoading(true);

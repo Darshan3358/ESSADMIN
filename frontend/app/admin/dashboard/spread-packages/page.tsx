@@ -23,7 +23,7 @@ export default function AdminSpreadPackagesPage() {
 
     const fetchPackages = useCallback(async () => {
         setLoading(true);
-        const token = localStorage.getItem('adminToken');
+        const token = sessionStorage.getItem('adminToken');
         try {
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/spread-packages`, {
                 headers: { Authorization: `Bearer ${token}` }
@@ -73,7 +73,7 @@ export default function AdminSpreadPackagesPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        const token = localStorage.getItem('adminToken');
+        const token = sessionStorage.getItem('adminToken');
         const url = editingPackage
             ? `${process.env.NEXT_PUBLIC_API_URL}/admin/spread-packages/${editingPackage._id}`
             : `${process.env.NEXT_PUBLIC_API_URL}/admin/spread-packages`;
@@ -109,7 +109,7 @@ export default function AdminSpreadPackagesPage() {
     const handleDelete = async (id: string) => {
         if (!window.confirm('Are you sure you want to delete this package?')) return;
 
-        const token = localStorage.getItem('adminToken');
+        const token = sessionStorage.getItem('adminToken');
         try {
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/spread-packages/${id}`, {
                 method: 'DELETE',
