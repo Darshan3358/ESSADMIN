@@ -357,7 +357,7 @@ const refetchChartData = async (range: DateRange) => {
                                             <p className="text-[9px] font-bold text-white/50 uppercase tracking-widest mt-0.5">Remaining</p>
                                         </div>
                                         <div>
-                                            <p className="text-lg font-black text-pink-200">
+                                            <p className="text-lg font-black text-yellow-300">
                                                 {stats.views.toLocaleString()}
                                             </p>
                                             <p className="text-[9px] font-bold text-white/50 uppercase tracking-widest mt-0.5">Total</p>
