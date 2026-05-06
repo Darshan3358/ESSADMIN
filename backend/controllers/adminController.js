@@ -344,18 +344,17 @@ const getDashboardStats = asyncHandler(async (req, res) => {
         ]),
         Order.countDocuments({ createdAt: { $gte: startOfMonth } }),
         Seller.countDocuments({ role: 'seller', createdAt: { $gte: startOfMonth } }),
-        // Order.aggregate([
-        //     { $match: { createdAt: { $gte: startDate }, status: { $nin: ['cancelled', 'Cancelled'] } } },
-        //     {
-        //         $group: {
-        //             _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
-        //             sales: { $sum: "$order_total" },
-        //             profit: { $sum: { $subtract: ["$order_total", "$cost_amount"] } },
-        //             orders: { $sum: 1 }
-        //         }
-        //     }
-        // ])
-        Promise.resolve([])
+        Order.aggregate([
+            { $match: { createdAt: { $gte: startDate }, status: { $nin: ['cancelled', 'Cancelled'] } } },
+            {
+                $group: {
+                    _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+                    sales: { $sum: "$order_total" },
+                    profit: { $sum: { $subtract: ["$order_total", "$cost_amount"] } },
+                    orders: { $sum: 1 }
+                }
+            }
+        ])
     ]);
     console.log(`[AdminStats] Results -> Sellers: ${totalUsers}, Products: ${totalProducts}, Orders: ${totalOrders}`);
     const totalRevenue = rechargeRevenue.length > 0 ? rechargeRevenue[0].total : 0;
