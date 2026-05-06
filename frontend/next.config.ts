@@ -15,10 +15,6 @@ const nextConfig: NextConfig = {
                 source: '/uploads/:path*',
                 destination: 'http://localhost:5001/uploads/:path*',
             },
-            {
-                source: '/product_images/:path*',
-                destination: 'http://localhost:5001/product_images/:path*',
-            },
         ];
     },
     async redirects() {

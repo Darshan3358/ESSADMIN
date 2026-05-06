@@ -95,7 +95,6 @@ if (process.env.NODE_ENV === 'development') {
 
 // Serve static files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-app.use('/product_images', express.static(path.join(__dirname, '..', 'product_images')));
 
 // Routes
 app.use('/api/auth', authRoutes);
