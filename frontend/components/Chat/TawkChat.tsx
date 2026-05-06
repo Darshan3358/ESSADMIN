@@ -23,6 +23,14 @@ export default function TawkChat() {
             s1.src = 'https://embed.tawk.to/68022bc67bc83f19076d0c8d/1ip47m0r4';
             s1.charset = 'UTF-8';
             s1.setAttribute('crossorigin', '*');
+
+            s1.onload = () => {
+                // @ts-ignore
+                if (window.Tawk_API && typeof window.Tawk_API.showWidget === 'function') {
+                    // @ts-ignore
+                    window.Tawk_API.showWidget();
+                }
+            };
             
             if (s0 && s0.parentNode) {
                 s0.parentNode.insertBefore(s1, s0);
