@@ -300,14 +300,11 @@ const getDashboardStats = asyncHandler(async (req, res) => {
     const mongoUri = process.env.MONGO_URI || 'not set';
     console.log(`[AdminStats] MONGO_URI Host: ${mongoUri.split('@')[1]?.split('/')[0] || 'localhost'}`);
 
-    // 1. Cache Check (Temporarily disabled for debugging)
-    /*
+    // 1. Cache Check (Enabled for performance)
     const cached = statsCache.get(cacheKey);
-    if (cached && (Date.now() - cached.timestamp < CACHE_DURATION)) {
+    if (cached && (Date.now() - cached.timestamp < 5 * 60 * 1000)) { // 5 min cache
         return res.json({ success: true, stats: cached.data });
     }
-    */
-    // Note: `days` is declared below — log moved after declaration
 
     const now = new Date();
     const startOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
@@ -333,7 +330,7 @@ const getDashboardStats = asyncHandler(async (req, res) => {
         newSellers,
         rawStatsResult
     ] = await Promise.all([
-        Seller.countDocuments({}),
+        Seller.countDocuments({ role: 'seller' }),
         Product.countDocuments({ isDeleted: { $ne: true } }),
         Order.countDocuments({}),
         Recharge.countDocuments({}),
@@ -348,7 +345,12 @@ const getDashboardStats = asyncHandler(async (req, res) => {
         Order.countDocuments({ createdAt: { $gte: startOfMonth } }),
         Seller.countDocuments({ role: 'seller', createdAt: { $gte: startOfMonth } }),
         Order.aggregate([
-            { $match: { createdAt: { $gte: startDate }, status: { $nin: ['cancelled', 'Cancelled'] } } },
+            { 
+                $match: { 
+                    createdAt: { $gte: startDate }, 
+                    status: { $nin: ['cancelled', 'Cancelled'] } 
+                } 
+            },
             {
                 $group: {
                     _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
@@ -359,6 +361,7 @@ const getDashboardStats = asyncHandler(async (req, res) => {
             }
         ])
     ]);
+
     console.log(`[AdminStats] Results -> Sellers: ${totalUsers}, Products: ${totalProducts}, Orders: ${totalOrders}`);
     const totalRevenue = rechargeRevenue.length > 0 ? rechargeRevenue[0].total : 0;
     const statsMap = {};
@@ -369,7 +372,6 @@ const getDashboardStats = asyncHandler(async (req, res) => {
     const loops = Math.ceil(days / interval);
 
     for (let i = loops - 1; i >= 0; i--) {
-        // Start of interval block in UTC
         const date = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
         date.setUTCDate(date.getUTCDate() - (i * interval));
 
@@ -417,11 +419,9 @@ const getDashboardStats = asyncHandler(async (req, res) => {
         ordersThisMonth,
         newSellers,
         chartData,
-        // Consistency aliases
         total_products: totalProducts,
         productCount: totalProducts
     };
-    console.log(`[AdminStats] Returning keys: ${Object.keys(stats).join(', ')}`);
 
     // Save to Cache
     statsCache.set(cacheKey, { data: stats, timestamp: Date.now() });
@@ -432,9 +432,9 @@ const getDashboardStats = asyncHandler(async (req, res) => {
         _debug_ts: Date.now(),
         db_host: (process.env.MONGO_URI || '').split('@')[1]?.split('/')[0] || 'localhost',
         raw_counts: {
-            sellers: await Seller.countDocuments({}),
-            products: await Product.countDocuments({}),
-            orders: await Order.countDocuments({})
+            sellers: totalUsers,
+            products: totalProducts,
+            orders: totalOrders
         }
     });
 });
