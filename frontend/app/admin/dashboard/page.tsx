@@ -116,9 +116,8 @@ export default function AdminDashboardPage() {
     };
 
     if (loading) return (
-        <div style={{ padding: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '400px' }}>
-            <div style={{ width: '40px', height: '40px', border: '3px solid rgba(59,130,246,0.3)', borderTopColor: '#3b82f6', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-            <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+        <div style={{ padding: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '400px', color: 'rgba(255,255,255,0.5)', fontSize: '18px', fontWeight: 'bold', letterSpacing: '2px' }}>
+            Loading...
         </div>
     );
 
