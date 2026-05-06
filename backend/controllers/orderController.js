@@ -229,14 +229,14 @@ const payStorehouse = asyncHandler(async (req, res) => {
 const getMyOrders = asyncHandler(async (req, res) => {
     const APIFeatures = require('../utils/apiFeatures');
 
-    // Global Filter: Fetch orders for the logged-in seller (Handle ObjectId and Numeric ID)
-    let filter = {
-        $or: [
-            { seller_id: req.user._id },           // As ObjectId
-            { seller_id: req.user.id },            // As Number (if stored as number)
-            { seller_id: String(req.user.id) }     // As String (if stored as string)
-        ]
-    };
+    const sellerIdFilter = [
+        req.user._id,
+        req.user.id,
+        String(req.user._id),
+        String(req.user.id)
+    ].filter(v => v !== undefined && v !== null);
+
+    let filter = { seller_id: { $in: sellerIdFilter } };
 
     // Keyword search integration
     if (req.query.keyword) {
@@ -260,37 +260,53 @@ const getMyOrders = asyncHandler(async (req, res) => {
     const limit = req.query.limit * 1 || 10;
     const totalPages = Math.ceil(totalCount / limit);
 
-    const features = new APIFeatures(Order.find(filter), req.query)
-        .sort()
-        .paginate();
-
+    const features = new APIFeatures(Order.find(filter), req.query).sort().paginate();
     const orders = await features.query;
 
-    // Attach "No. of Products" count to each order
-    const ordersWithCounts = await Promise.all(orders.map(async (order) => {
-        const productCount = await OrderItem.countDocuments({ order_id: order._id });
-        return {
-            ...order.toObject(),
-            total_products: productCount
-        };
+    // Attach "No. of Products" count in bulk (Fix N+1 query problem)
+    const orderIds = orders.map(o => o._id);
+    const itemCounts = await OrderItem.aggregate([
+        { $match: { order_id: { $in: orderIds } } },
+        { $group: { _id: "$order_id", count: { $sum: 1 } } }
+    ]);
+    const countsMap = {};
+    itemCounts.forEach(c => {
+        countsMap[c._id.toString()] = c.count;
+    });
+
+    const ordersWithCounts = orders.map(order => ({
+        ...(order.toObject ? order.toObject() : order),
+        total_products: countsMap[order._id.toString()] || 0
     }));
 
-    // Calculate Global Stats (reflects ALL orders for this seller)
-    const allOrders = await Order.find({
-        $or: [
-            { seller_id: req.user._id },
-            { seller_id: req.user.id },
-            { seller_id: String(req.user.id) }
-        ]
-    });
+    // Calculate Global Stats via Aggregation (Prevent loading all orders into RAM)
+    const [statsResult] = await Order.aggregate([
+        { $match: { seller_id: { $in: sellerIdFilter } } },
+        {
+            $group: {
+                _id: null,
+                totalTurnover: { 
+                    $sum: { 
+                        $convert: { input: "$order_total", to: "double", onError: 0, onNull: 0 }
+                    } 
+                },
+                all: { $sum: 1 },
+                pending: { $sum: { $cond: [{ $eq: ["$status", "pending"] }, 1, 0] } },
+                delivered: { $sum: { $cond: [{ $eq: [{ $toLower: { $ifNull: ["$status", ""] } }, "delivered"] }, 1, 0] } },
+                cancelled: { $sum: { $cond: [{ $eq: ["$status", "cancelled"] }, 1, 0] } },
+                payment_pending: { $sum: { $cond: [{ $eq: [{ $toLower: { $ifNull: ["$payment_status", ""] } }, "unpaid"] }, 1, 0] } }
+            }
+        }
+    ]);
+
     const stats = {
-        totalTurnover: allOrders.reduce((acc, o) => acc + (parseFloat(o.order_total) || 0), 0),
+        totalTurnover: statsResult ? statsResult.totalTurnover : 0,
         counts: {
-            all: allOrders.length,
-            pending: allOrders.filter(o => o.status === 'pending').length,
-            delivered: allOrders.filter(o => (o.status || '').toLowerCase() === 'delivered').length,
-            cancelled: allOrders.filter(o => o.status === 'cancelled').length,
-            payment_pending: allOrders.filter(o => (o.payment_status || '').toLowerCase() === 'unpaid').length
+            all: statsResult ? statsResult.all : 0,
+            pending: statsResult ? statsResult.pending : 0,
+            delivered: statsResult ? statsResult.delivered : 0,
+            cancelled: statsResult ? statsResult.cancelled : 0,
+            payment_pending: statsResult ? statsResult.payment_pending : 0
         }
     };
 
