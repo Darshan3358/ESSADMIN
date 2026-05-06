@@ -194,7 +194,6 @@ exports.getDashboardStats = async (req, res) => {
         const netProfitMargin = allTimeSales > 0 ? ((netProfit / allTimeSales) * 100).toFixed(1) : 0;
 
         // 7. Dynamic Chart Data (Last X Days)
-        const days = parseInt(req.query.days) || 7;
         const chartData = [];
         
         // Calculate startDate in UTC using the 'now' variable defined above
