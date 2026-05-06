@@ -5,6 +5,11 @@ export const metadata: Metadata = {
     title: "EssSmartSeller - Smart E-Commerce Management Platform",
     description: "Comprehensive e-commerce management system with sales analytics, supplier management, and store health monitoring",
     keywords: "e-commerce, sales analytics, supplier management, store health, dashboard",
+    icons: {
+        icon: "/logo.png",
+        shortcut: "/logo.png",
+        apple: "/logo.png",
+    }
 };
 
 import { AuthProvider } from "@/context/AuthContext";
