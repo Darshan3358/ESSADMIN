@@ -13,7 +13,7 @@ const TodaySalesCard = dynamic(() => import('@/components/dashboard/MetricCard')
 const ThisMonthSalesCard = dynamic(() => import('@/components/dashboard/MetricCard').then(mod => mod.ThisMonthSalesCard));
 const LastMonthSalesCard = dynamic(() => import('@/components/dashboard/MetricCard').then(mod => mod.LastMonthSalesCard));
 import { ChartDataPoint, DateRange } from '@/types';
-import { TrendingUp, Package, Zap, Sparkles, Activity, ArrowUpRight, Globe, CheckCircle2, Heart, Eye, Gem, Shield, Clock, ArrowRight, X, Star } from 'lucide-react';
+import { TrendingUp, Package, Zap, Sparkles, Activity, ArrowUpRight, Globe, CheckCircle2, Heart, Eye, Gem, Shield, Clock, ArrowRight, X, Star, Box } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
 import { useRouter } from 'next/navigation';
