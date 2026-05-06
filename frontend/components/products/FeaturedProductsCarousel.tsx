@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import Image from 'next/image';
 import { Product } from '@/types';
 import { Star, ShoppingCart, Sparkles } from 'lucide-react';
 import Swiper from 'swiper';
@@ -138,12 +139,15 @@ function ProductCard({ product }: { product: Product }) {
                 )}
 
                 {/* Product Image */}
-                <div className="w-full h-full transform group-hover:scale-110 transition-transform duration-500">
-                    <img
-                        src={product.image?.startsWith('http') ? product.image : `${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '')}${product.image}`} 
+                <div className="relative w-full h-full transform group-hover:scale-110 transition-transform duration-500">
+                    <Image
+                        src={product.image?.startsWith('http') ? product.image : `${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || ''}${product.image}`} 
                         alt={product.name}
-                        className="w-full h-full object-contain"
+                        fill
+                        className="object-contain"
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                         onError={(e) => {
+                            (e.target as HTMLImageElement).srcset = '';
                             (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=1000&auto=format&fit=crop';
                         }}
                     />

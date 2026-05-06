@@ -41,6 +41,21 @@ const nextConfig: NextConfig = {
                 hostname: '*.vercel.app',
                 pathname: '/uploads/**',
             },
+            {
+                protocol: 'https',
+                hostname: '*.ess-pvt.net',
+                pathname: '/**',
+            },
+            {
+                protocol: 'http',
+                hostname: '*.ess-pvt.net',
+                pathname: '/**',
+            },
+            {
+                protocol: 'https',
+                hostname: 'images.unsplash.com',
+                pathname: '/**',
+            },
         ],
     },
     // Ignore ESLint errors during production build
