@@ -7,6 +7,7 @@ const {
     updateProduct,
     deleteProduct,
     getSellerProducts,
+    getSellerProductIds,
     addToMyStore,
     removeFromStore,
     getFeaturedProducts,
@@ -23,6 +24,7 @@ router.route('/')
     ]), createProduct);
 
 router.route('/my-products').get(protect, getSellerProducts);
+router.route('/my-product-ids').get(protect, getSellerProductIds);
 router.route('/featured').get(getFeaturedProducts);
 router.route('/image/:filename').get(serveProductImage);
 router.route('/add-to-store').post(protect, addToMyStore);

@@ -41,10 +41,10 @@ function StorehousePageInner() {
             if (storeRes.success) {
                 setProducts(storeRes.data || []);
             }
-            // Fetch the products the seller has already added
-            const myRes = await api.get('/products/my-products?limit=10000');
+            // Fetch the products the seller has already added (Just IDs for performance)
+            const myRes = await api.get('/products/my-product-ids');
             if (myRes.success) {
-                const ids = new Set<string>((myRes.data || []).map((p: any) => String(p._id || p.id)));
+                const ids = new Set<string>(myRes.data || []);
                 setAddedProductIds(ids);
             }
         } catch (error) {

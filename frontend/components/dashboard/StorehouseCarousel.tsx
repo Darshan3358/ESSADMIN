@@ -30,7 +30,7 @@ export default function StorehouseCarousel({ onProductAdded }: StorehouseCarouse
             // Get curated products and settings
             const [res, myRes, settRes] = await Promise.all([
                 api.get('/products?limit=50&inStorehouseCarousel=true&sort=-createdAt'),
-                api.get('/products/my-products?limit=1000'),
+                api.get('/products/my-product-ids'),
                 api.get('/settings/carousel')
             ]);
 
@@ -38,7 +38,7 @@ export default function StorehouseCarousel({ onProductAdded }: StorehouseCarouse
                 setProducts(res.data || []);
             }
             if (myRes.success) {
-                const ids = new Set<string>((myRes.data || []).map((p: any) => String(p._id)));
+                const ids = new Set<string>(myRes.data || []);
                 setAddedIds(ids);
             }
             if (settRes.success) {

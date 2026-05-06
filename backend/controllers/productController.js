@@ -398,6 +398,34 @@ const getSellerProducts = asyncHandler(async (req, res) => {
     });
 });
 
+// @desc    Get just the IDs of logged-in seller's products (High Performance)
+// @route   GET /api/products/my-product-ids
+// @access  Private/Seller
+const getSellerProductIds = asyncHandler(async (req, res) => {
+    const sellerId = req.user.id;
+    const sellerObjectId = req.user._id;
+
+    let query = {
+        $or: [
+            { seller_id: sellerId },
+            { seller_id: String(sellerId) },
+            { seller_id: sellerObjectId },
+            { seller_id: String(sellerObjectId) }
+        ]
+    };
+
+    // Only fetch the product_id field
+    const sellerProductsLink = await SellerProduct.find(query, 'product_id').lean();
+    
+    // Return flat array of string IDs
+    const ids = sellerProductsLink.map(link => String(link.product_id));
+    
+    res.json({
+        success: true,
+        data: ids
+    });
+});
+
 // @desc    Add a product to seller's store (my products)
 // @route   POST /api/products/add-to-store
 // @access  Private/Seller
@@ -545,6 +573,7 @@ module.exports = {
     updateProduct,
     deleteProduct,
     getSellerProducts,
+    getSellerProductIds,
     addToMyStore,
     removeFromStore,
     getFeaturedProducts,
