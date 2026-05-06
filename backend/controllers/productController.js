@@ -19,8 +19,8 @@ const normalizeImagePath = (imgPath) => {
     if (imgPath.startsWith('image-') || imgPath.startsWith('gallery-')) {
         return `/api/products/image/${imgPath}`;
     }
-    // Legacy bare filename (e.g. product_395.jpg) → /uploads/<filename>
-    return `/uploads/${imgPath}`;
+    // Legacy bare filename (e.g. 1745402074_xxx.jpg) → /product_images/<filename>
+    return `/product_images/${imgPath}`;
 };
 
 
