@@ -301,14 +301,14 @@ const getSellerProducts = asyncHandler(async (req, res) => {
     const sellerId = req.user.id; // Custom Numeric ID
     const sellerObjectId = req.user._id; // ObjectId
 
-    let query = {
-        $or: [
-            { seller_id: sellerId },
-            { seller_id: String(sellerId) },
-            { seller_id: sellerObjectId },
-            { seller_id: String(sellerObjectId) }
-        ]
-    };
+    const sellerIdFilter = [
+        sellerId,
+        String(sellerId),
+        sellerObjectId,
+        String(sellerObjectId)
+    ].filter(v => v !== undefined && v !== null);
+
+    let query = { seller_id: { $in: sellerIdFilter } };
 
     // Get ALL linked product links
     const sellerProductsLink = await SellerProduct.find(query).sort({ created_at: -1 }).lean();
@@ -405,14 +405,14 @@ const getSellerProductIds = asyncHandler(async (req, res) => {
     const sellerId = req.user.id;
     const sellerObjectId = req.user._id;
 
-    let query = {
-        $or: [
-            { seller_id: sellerId },
-            { seller_id: String(sellerId) },
-            { seller_id: sellerObjectId },
-            { seller_id: String(sellerObjectId) }
-        ]
-    };
+    const sellerIdFilter = [
+        sellerId,
+        String(sellerId),
+        sellerObjectId,
+        String(sellerObjectId)
+    ].filter(v => v !== undefined && v !== null);
+
+    let query = { seller_id: { $in: sellerIdFilter } };
 
     // Only fetch the product_id field
     const sellerProductsLink = await SellerProduct.find(query, 'product_id').lean();
@@ -453,27 +453,23 @@ const addToMyStore = asyncHandler(async (req, res) => {
     const sellerId = req.user._id;
     const sellerNumericId = req.user.id; // numeric id field
 
+    const sellerIdFilter = [
+        sellerId,
+        String(sellerId),
+        sellerNumericId,
+        String(sellerNumericId)
+    ].filter(v => v !== undefined && v !== null);
+
     // Check how many products the seller has already added
-    // (query by BOTH ObjectId and numeric id to match any storage format)
     const currentCount = await SellerProduct.countDocuments({
-        $or: [
-            { seller_id: sellerId },
-            { seller_id: String(sellerId) },
-            { seller_id: sellerNumericId },
-            { seller_id: String(sellerNumericId) }
-        ]
+        seller_id: { $in: sellerIdFilter }
     });
 
     // Check the seller's plan product limit
     // Sort by product_limit DESC to get the best (highest) active package
     const Package = require('../models/Package');
     const bestPackage = await Package.findOne({
-        $or: [
-            { seller_id: sellerId },
-            { seller_id: String(sellerId) },
-            { seller_id: sellerNumericId },
-            { seller_id: String(sellerNumericId) }
-        ],
+        seller_id: { $in: sellerIdFilter },
         status: 1
     }).sort({ product_limit: -1 });
     const productLimit = bestPackage ? bestPackage.product_limit : 10; // Default free plan = 10
