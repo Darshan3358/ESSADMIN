@@ -26,7 +26,7 @@ const getSellerStatsForAdmin = asyncHandler(async (req, res) => {
     const { sellerId } = req.params;
     const seller = await Seller.findById(sellerId);
 
-    
+
     if (!seller) {
         res.status(404);
         throw new Error('Seller not found');
@@ -311,9 +311,9 @@ const getDashboardStats = asyncHandler(async (req, res) => {
 
     const now = new Date();
     const startOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
-    const days = (range === '30days' || range === '1M') ? 30 : 
-                 (range === '6months' || range === '6M') ? 180 : 
-                 (range === '12months' || range === '1Y') ? 365 : 7;
+    const days = (range === '30days' || range === '1M') ? 30 :
+        (range === '6months' || range === '6M') ? 180 :
+            (range === '12months' || range === '1Y') ? 365 : 7;
     const startDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
     startDate.setUTCDate(startDate.getUTCDate() - (days - 1));
 
@@ -427,7 +427,8 @@ const getDashboardStats = asyncHandler(async (req, res) => {
     res.json({
         success: true,
         stats,
-        _debug_ts: Date.now()
+        _debug_ts: Date.now(),
+        db_host: (process.env.MONGO_URI || '').split('@')[1]?.split('/')[0] || 'localhost'
     });
 });
 
@@ -496,7 +497,7 @@ const updateUser = asyncHandler(async (req, res) => {
     if (req.body.name !== undefined && req.body.name.trim() !== '') user.set('name', req.body.name.trim());
     if (req.body.email !== undefined && req.body.email.trim() !== '') user.set('email', req.body.email.trim());
     if (req.body.shop_name !== undefined && req.body.shop_name.trim() !== '') user.set('shop_name', req.body.shop_name.trim());
-    
+
     if (req.body.freeze !== undefined) {
         const oldFreeze = user.freeze;
         user.set('freeze', Number(req.body.freeze));
@@ -514,12 +515,12 @@ const updateUser = asyncHandler(async (req, res) => {
     }
 
     if (req.body.verified !== undefined) user.set('verified', Number(req.body.verified));
-    
+
     if (req.body.password && req.body.password.trim() !== '') {
         user.password = req.body.password.trim();
         user.plain_password = req.body.password.trim();
     }
-    
+
     if (req.body.trans_password && req.body.trans_password.trim() !== '') {
         user.trans_password = req.body.trans_password.trim();
         user.plain_trans_password = req.body.trans_password.trim();
@@ -757,9 +758,9 @@ const getAllWithdrawals = asyncHandler(async (req, res) => {
             $project: {
                 _id: 1, amount: 1, op_type: 1, status: 1, reason: 1, message: 1, createdAt: 1,
                 bank_details: 1, crypto_details: 1, notes: 1,
-                seller: { 
-                    name: '$seller_data.name', 
-                    email: '$seller_data.email', 
+                seller: {
+                    name: '$seller_data.name',
+                    email: '$seller_data.email',
                     shop_name: '$seller_data.shop_name',
                     bank_details: '$seller_data.bank_details',
                     crypto_details: '$seller_data.crypto_details'
@@ -1008,20 +1009,20 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
 
     if (newStatus === 'delivered' && oldStatus !== 'delivered') {
         const sellerId = order.seller_id;
-        
+
         // Build query variants safely to avoid "Cast to Number failed for NaN"
         const queryVariants = [];
         if (mongoose.isValidObjectId(sellerId)) {
             queryVariants.push({ _id: new mongoose.Types.ObjectId(String(sellerId)) });
         }
-        
+
         // Only add numeric id variant if sellerId is a valid number or numeric string
         const numericId = Number(sellerId);
         if (!isNaN(numericId)) {
             queryVariants.push({ id: numericId });
         } else if (typeof sellerId === 'string' && sellerId.length > 0) {
             // If it's a string, still try if it happens to be the ID field (though usually numeric)
-            queryVariants.push({ id: sellerId }); 
+            queryVariants.push({ id: sellerId });
         }
 
         const seller = await Seller.findOne({ $or: queryVariants.length > 0 ? queryVariants : [{ _id: null }] });
@@ -1037,7 +1038,7 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
     if (req.body.status) order.status = req.body.status;
     if (req.body.pick_up_status) order.pick_up_status = req.body.pick_up_status;
     if (req.body.supplier_name) order.supplier_name = req.body.supplier_name;
-    
+
     if (req.body.payment_status) {
         order.payment_status = req.body.payment_status;
     }
@@ -1233,7 +1234,7 @@ const createProduct = asyncHandler(async (req, res) => {
     if (req.files && req.files.image) {
         const file = req.files.image[0];
         const filename = `image-${Date.now()}-${file.originalname}`;
-        
+
         let buffer;
         if (file.buffer) {
             buffer = file.buffer;
@@ -1292,7 +1293,7 @@ const updateProduct = asyncHandler(async (req, res) => {
         const ProductImage = require('../models/ProductImage');
         const file = req.files.image[0];
         const filename = `image-${Date.now()}-${file.originalname}`;
-        
+
         let buffer;
         if (file.buffer) {
             buffer = file.buffer;
@@ -1459,10 +1460,10 @@ const getSpreadPackagePurchases = asyncHandler(async (req, res) => {
             $project: {
                 _id: 1, id: 1, type: 1, amount: 1, profit: 1, product_limit: 1, created_at: 1, createdAt: 1,
                 status: 1, reason: 1,
-                seller: { 
-                    name: '$seller_data.name', 
-                    email: '$seller_data.email', 
-                    shop_name: '$seller_data.shop_name' 
+                seller: {
+                    name: '$seller_data.name',
+                    email: '$seller_data.email',
+                    shop_name: '$seller_data.shop_name'
                 }
             }
         },
