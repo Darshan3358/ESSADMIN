@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ShoppingCart, Search, Filter, MoreHorizontal, Eye, Truck, CheckCircle, Clock, XCircle, Plus, Minus } from 'lucide-react';
+import { ShoppingCart, Search, Filter, MoreHorizontal, Eye, Truck, CheckCircle, Clock, XCircle, Plus, Minus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -33,6 +33,9 @@ export default function OrdersPage() {
         });
     };
 
+    const [currentPage, setCurrentPage] = useState(1);
+    const ORDERS_PER_PAGE = 6;
+
     useEffect(() => {
         if (!authLoading && !user) {
             router.push('/login');
@@ -44,7 +47,7 @@ export default function OrdersPage() {
             if (!user) return;
             setIsLoading(true);
             try {
-                const url = `/orders/myorders?status=${statusFilter}${searchTerm ? `&keyword=${searchTerm}` : ''}`;
+                const url = `/orders/myorders?status=${statusFilter}&page=${currentPage}&limit=${ORDERS_PER_PAGE}${searchTerm ? `&keyword=${searchTerm}` : ''}`;
                 const response = await api.get(url);
                 if (response.success) {
                     setOrders(response.orders || []);
@@ -60,7 +63,11 @@ export default function OrdersPage() {
         if (user) {
             fetchOrders();
         }
-    }, [user, statusFilter, searchTerm]);
+    }, [user, statusFilter, searchTerm, currentPage]);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [statusFilter, searchTerm]);
 
     if (authLoading || (!user)) return null;
 
@@ -314,6 +321,32 @@ export default function OrdersPage() {
                             </tbody>
                         </table>
                     </div>{/* end overflow-x-auto */}
+
+                    {/* Pagination Controls */}
+                    <div className="p-4 border-t border-gray-100 dark:border-slate-800 flex items-center justify-between gap-4">
+                        <p className="text-sm font-bold text-gray-500 dark:text-slate-400">
+                            {t('Showing')} <span className="text-gray-900 dark:text-slate-200">{orders.length}</span> {t('of')} <span className="text-gray-900 dark:text-slate-200">{stats?.counts?.all || 0}</span> {t('orders')}
+                        </p>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                                disabled={currentPage === 1 || isLoading}
+                                className="p-2 rounded-xl bg-gray-50 dark:bg-slate-800 text-gray-600 dark:text-slate-400 disabled:opacity-50 hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400 transition-all border border-gray-200 dark:border-slate-700"
+                            >
+                                <ChevronLeft className="w-5 h-5" />
+                            </button>
+                            <span className="px-4 py-2 text-sm font-black text-gray-900 dark:text-slate-100 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl shadow-sm">
+                                {currentPage}
+                            </span>
+                            <button
+                                onClick={() => setCurrentPage(prev => prev + 1)}
+                                disabled={orders.length < ORDERS_PER_PAGE || isLoading}
+                                className="p-2 rounded-xl bg-gray-50 dark:bg-slate-800 text-gray-600 dark:text-slate-400 disabled:opacity-50 hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400 transition-all border border-gray-200 dark:border-slate-700"
+                            >
+                                <ChevronRight className="w-5 h-5" />
+                            </button>
+                        </div>
+                    </div>
                 </div>{/* end glass-card */}
             </div>{/* end space-y-8 */}
 

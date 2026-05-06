@@ -292,14 +292,20 @@ const deleteProduct = asyncHandler(async (req, res) => {
 // @desc    Get logged-in seller's products with Pagination & Search (Handling Missing Products)
 // @route   GET /api/products/my-products
 // @access  Private/Seller
+const sellerProductCache = new Map();
+const SELLER_PRODUCT_CACHE_DURATION = 30 * 1000; // 30 seconds
+
 const getSellerProducts = asyncHandler(async (req, res) => {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 10;
-    const skip = (page - 1) * limit;
     const keyword = req.query.keyword ? req.query.keyword.toLowerCase() : null;
+    const sellerId = req.user.id;
 
-    // 1. Find all SellerProduct entries for this seller
-    const sellerId = req.user.id; // Custom Numeric ID
+    const cacheKey = `${sellerId}_${page}_${limit}_${keyword}`;
+    const cached = sellerProductCache.get(cacheKey);
+    if (cached && (Date.now() - cached.timestamp < SELLER_PRODUCT_CACHE_DURATION)) {
+        return res.json(cached.data);
+    }
     const sellerObjectId = req.user._id; // ObjectId
 
     const sellerIdFilter = [
@@ -382,6 +388,8 @@ const getSellerProducts = asyncHandler(async (req, res) => {
         );
     }
 
+    const skip = (page - 1) * limit;
+
     // 5. Client-side Pagination
     const totalCount = combinedProducts.length;
     const totalPages = Math.ceil(totalCount / limit);
@@ -389,14 +397,19 @@ const getSellerProducts = asyncHandler(async (req, res) => {
     // Slice for current page
     const paginatedProducts = combinedProducts.slice(skip, skip + limit);
 
-    res.json({
+    const responseData = {
         success: true,
         count: paginatedProducts.length,
         totalCount,
         totalPages,
         currentPage: page,
         data: paginatedProducts.map(normalizeProduct)
-    });
+    };
+
+    // Save to Cache
+    sellerProductCache.set(cacheKey, { data: responseData, timestamp: Date.now() });
+
+    res.json(responseData);
 });
 
 // @desc    Get just the IDs of logged-in seller's products (High Performance)

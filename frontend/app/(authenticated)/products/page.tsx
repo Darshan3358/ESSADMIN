@@ -17,21 +17,35 @@ export default function ProductsPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [showEntries, setShowEntries] = useState(10);
     const [currentPage, setCurrentPage] = useState(1);
+    const [totalCount, setTotalCount] = useState(0);
 
     const fetchData = async () => {
         setIsLoading(true);
         try {
-            const [statsRes, productsRes] = await Promise.all([
-                api.get('/sellers/stats'),
-                api.get('/products/my-products?limit=1000')
-            ]);
-            
+            // Stats can be fetched once or occasionally
+            const statsRes = await api.get('/sellers/stats');
             if (statsRes.success) setStats(statsRes.stats);
-            if (productsRes.success) setProducts(productsRes.data || []);
+
+            await fetchProducts(1);
         } catch (error) {
-            console.error('Error fetching products:', error);
+            console.error('Error fetching data:', error);
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const fetchProducts = async (page: number) => {
+        try {
+            let url = `/products/my-products?page=${page}&limit=${showEntries}`;
+            if (searchQuery) url += `&keyword=${encodeURIComponent(searchQuery)}`;
+
+            const res = await api.get(url);
+            if (res.success) {
+                setProducts(res.data || []);
+                setTotalCount(res.totalCount || res.count || 0);
+            }
+        } catch (error) {
+            console.error('Error fetching products:', error);
         }
     };
 
@@ -39,17 +53,14 @@ export default function ProductsPage() {
         if (user) fetchData();
     }, [user]);
 
-    const filtered = products.filter(p => {
-        const q = searchQuery.toLowerCase();
-        return (
-            (p.name || '').toLowerCase().includes(q) ||
-            (p.category || '').toLowerCase().includes(q) ||
-            (p.description || '').toLowerCase().includes(q)
-        );
-    });
+    useEffect(() => {
+        if (user && !isLoading) {
+            fetchProducts(currentPage);
+        }
+    }, [currentPage, showEntries, searchQuery]);
 
-    const totalPages = Math.ceil(filtered.length / showEntries);
-    const paginated = filtered.slice((currentPage - 1) * showEntries, currentPage * showEntries);
+    const totalPages = Math.max(1, Math.ceil(totalCount / showEntries));
+    const paginated = products;
     const baseUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || '';
 
     if (!user) return null;
@@ -116,7 +127,7 @@ export default function ProductsPage() {
                             />
                             {searchQuery && (
                                 <span className="absolute right-2.5 top-1/2 -translate-y-1/2 bg-blue-600 text-white text-[10px] font-black px-2 py-1 rounded-lg">
-                                    {filtered.length} {t('found')}
+                                    {totalCount} {t('found')}
                                 </span>
                             )}
                         </div>
@@ -219,10 +230,10 @@ export default function ProductsPage() {
                 )}
 
                 {/* Table Footer */}
-                {!isLoading && filtered.length > 0 && (
+                {!isLoading && totalCount > 0 && (
                     <div className="flex flex-col sm:flex-row items-center justify-between gap-6 px-8 py-6 border-t border-gray-100 dark:border-slate-800 bg-gray-50/30 dark:bg-slate-800/10">
                         <p className="text-xs text-gray-400 dark:text-slate-500 font-bold uppercase tracking-widest">
-                            {t('Showing')} <span className="text-gray-900 dark:text-slate-200">{Math.min((currentPage - 1) * showEntries + 1, filtered.length)}–{Math.min(currentPage * showEntries, filtered.length)}</span> {t('of')} <span className="text-gray-900 dark:text-slate-200">{filtered.length}</span> {t('products')}
+                            {t('Showing')} <span className="text-gray-900 dark:text-slate-200">{Math.min((currentPage - 1) * showEntries + 1, totalCount)}–{Math.min(currentPage * showEntries, totalCount)}</span> {t('of')} <span className="text-gray-900 dark:text-slate-200">{totalCount}</span> {t('products')}
                         </p>
                         {totalPages > 1 && (
                             <div className="flex items-center gap-2">

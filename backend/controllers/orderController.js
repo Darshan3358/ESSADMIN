@@ -226,8 +226,20 @@ const payStorehouse = asyncHandler(async (req, res) => {
 // @desc    Get logged in user orders
 // @route   GET /api/orders/myorders
 // @access  Private
+const orderCache = new Map();
+const CACHE_DURATION = 30 * 1000; // 30 seconds cache
+
 const getMyOrders = asyncHandler(async (req, res) => {
     const APIFeatures = require('../utils/apiFeatures');
+    const sellerId = req.user._id;
+    const { status, keyword, page, limit: queryLimit } = req.query;
+    const cacheKey = `orders_${sellerId}_${status}_${keyword}_${page}_${queryLimit}`;
+
+    // 1. Cache Check
+    const cached = orderCache.get(cacheKey);
+    if (cached && (Date.now() - cached.timestamp < CACHE_DURATION)) {
+        return res.json(cached.data);
+    }
 
     const sellerIdFilter = [
         req.user._id,
@@ -310,14 +322,19 @@ const getMyOrders = asyncHandler(async (req, res) => {
         }
     };
 
-    res.json({
+    const responseData = {
         success: true,
         orders: ordersWithCounts,
         totalCount,
         totalPages,
         page: req.query.page * 1 || 1,
         stats
-    });
+    };
+
+    // Save to Cache
+    orderCache.set(cacheKey, { data: responseData, timestamp: Date.now() });
+
+    res.json(responseData);
 });
 
 // @desc    Get all orders
