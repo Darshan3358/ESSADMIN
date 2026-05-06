@@ -366,62 +366,44 @@ const refetchChartData = async (range: DateRange) => {
                                 </div>
                             </div>
                         </div>
-                    </section>
-
-                    {/* Products by Category Card */}
+                    </section>                    {/* Products by Category Card */}
                     <section className="text-left">
-                        <div className="relative overflow-hidden rounded-[2.5rem] bg-[#020617] border border-white/5 shadow-2xl h-full p-5 md:p-8 flex flex-col">
-                            <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500/5 blur-[100px] pointer-events-none" />
-                            
-                            <div className="flex items-center gap-4 mb-8">
-                                <div className="w-12 h-12 bg-primary-500/10 rounded-2xl flex items-center justify-center border border-primary-500/20">
-                                    <Package className="w-6 h-6 text-primary-500" />
-                                </div>
-                                <div>
-                                    <h3 className="text-xl font-black text-white tracking-tight">Products by Category</h3>
-                                    <p className="text-xs font-bold text-white/40 uppercase tracking-widest">Inventory Distribution</p>
-                                </div>
-                            </div>
+                        <div className="relative overflow-hidden rounded-[2.5rem] bg-white border border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.05)] h-full p-6 md:p-10 flex flex-col">
+                            <h3 className="text-2xl font-black text-slate-900 tracking-tight mb-8">Products by Category</h3>
 
-                            <div className="space-y-4 overflow-y-auto max-h-[350px] pr-2 custom-scrollbar">
+                            <div className="space-y-6 overflow-y-auto max-h-[450px] pr-2 custom-scrollbar">
                                 {stats.categoryCounts && stats.categoryCounts.length > 0 ? (
                                     stats.categoryCounts.sort((a: any, b: any) => b.count - a.count).map((cat: any, i: number) => {
                                         const percentage = Math.round((cat.count / stats.totalProducts) * 100) || 0;
+                                        const colors = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4'];
+                                        const color = colors[i % colors.length];
+                                        
                                         return (
-                                            <div key={i} className="group p-4 bg-white/5 border border-white/5 rounded-2xl transition-all hover:bg-white/10 hover:border-white/10">
-                                                <div className="flex justify-between items-center mb-2">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-2 h-2 rounded-full bg-primary-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]"></div>
-                                                        <span className="text-sm font-bold text-white/90">{cat._id || 'Uncategorized'}</span>
-                                                    </div>
-                                                    <span className="text-xs font-black text-primary-400 bg-primary-500/10 px-2 py-0.5 rounded-lg">{cat.count} items</span>
+                                            <div key={i} className="flex flex-col gap-2">
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-[15px] font-bold text-slate-700 capitalize">{cat._id || 'Uncategorized'}</span>
+                                                    <span className="text-[15px] font-black text-slate-900">{cat.count} ({percentage}%)</span>
                                                 </div>
-                                                <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                                                <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
                                                     <div 
-                                                        className="h-full bg-gradient-to-r from-primary-500 to-blue-400 rounded-full transition-all duration-1000 group-hover:from-primary-400 group-hover:to-blue-300"
-                                                        style={{ width: `${percentage}%` }}
+                                                        className="h-full rounded-full transition-all duration-1000"
+                                                        style={{ width: `${percentage}%`, backgroundColor: color }}
                                                     ></div>
-                                                </div>
-                                                <div className="mt-1 text-right">
-                                                    <span className="text-[10px] font-bold text-white/20 uppercase tracking-widest">{percentage}% of stock</span>
                                                 </div>
                                             </div>
                                         );
                                     })
                                 ) : (
-                                    <div className="flex flex-col items-center justify-center h-40 text-white/20 gap-3">
-
-                                        <Box className="w-12 h-12 opacity-20" />
+                                    <div className="flex flex-col items-center justify-center h-40 text-slate-300 gap-3">
+                                        <Package className="w-12 h-12 opacity-20" />
                                         <p className="text-sm font-bold">No category data available</p>
                                     </div>
                                 )}
                             </div>
 
-                            <div className="mt-auto pt-6 border-t border-white/5">
-                                <div className="flex justify-between items-center">
-                                    <p className="text-xs font-bold text-white/40 uppercase tracking-widest">Total Inventory</p>
-                                    <p className="text-xl font-black text-white">{stats.totalProducts} <span className="text-[10px] font-bold opacity-40">ITEMS</span></p>
-                                </div>
+                            <div className="mt-auto pt-8 border-t border-slate-50 flex justify-between items-center">
+                                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Total Inventory</p>
+                                <p className="text-2xl font-black text-slate-900">{stats.totalProducts} <span className="text-[10px] font-bold opacity-30">ITEMS</span></p>
                             </div>
                         </div>
                     </section>
