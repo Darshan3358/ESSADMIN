@@ -115,11 +115,7 @@ export default function AdminDashboardPage() {
         setTimeout(() => setCopiedId(null), 2000);
     };
 
-    if (loading) return (
-        <div style={{ padding: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '400px', color: 'rgba(255,255,255,0.5)', fontSize: '18px', fontWeight: 'bold', letterSpacing: '2px' }}>
-            Loading...
-        </div>
-    );
+
 
     const unusedCodes = codes.filter(c => !c.isUsed);
     const usedCodes = codes.filter(c => c.isUsed);
