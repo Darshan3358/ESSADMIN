@@ -15,6 +15,10 @@ const nextConfig: NextConfig = {
                 source: '/uploads/:path*',
                 destination: 'http://localhost:5001/uploads/:path*',
             },
+            {
+                source: '/product_images/:path*',
+                destination: 'http://localhost:5001/product_images/:path*',
+            },
         ];
     },
     async redirects() {
@@ -50,6 +54,12 @@ const nextConfig: NextConfig = {
                 hostname: 'localhost',
                 port: '5001',
                 pathname: '/uploads/**',
+            },
+            {
+                protocol: 'http',
+                hostname: 'localhost',
+                port: '5001',
+                pathname: '/product_images/**',
             },
             {
                 protocol: 'http',

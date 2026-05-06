@@ -6,7 +6,7 @@ import {
     Warehouse, Package, Search, Filter, CheckCircle2, PlusCircle, Tag, Loader2,
     ChevronLeft, ChevronRight
 } from 'lucide-react';
-import { api } from '@/lib/api';
+import { api, getFullImageUrl } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslate } from '@/hooks/useTranslate';
@@ -120,7 +120,6 @@ function StorehousePageInner() {
 
     if (authLoading || !user) return null;
 
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || '';
 
     return (
         <>
@@ -238,9 +237,8 @@ function StorehousePageInner() {
                                     {paginatedProducts.map(product => {
                                     const isAdded = addedProductIds.has(String(product._id));
                                     const isAdding = addingId === product._id;
-                                    const imgSrc = product.image
-                                        ? (product.image.startsWith('http') ? product.image : `${baseUrl}${product.image}`)
-                                        : '';
+                                    const imgSrc = getFullImageUrl(product.image);
+
 
                                     return (
                                         <div

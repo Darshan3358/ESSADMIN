@@ -19,6 +19,11 @@ const normalizeImagePath = (imgPath) => {
     if (imgPath.startsWith('image-') || imgPath.startsWith('gallery-')) {
         return `/api/products/image/${imgPath}`;
     }
+    // Local product_images files: named like "1743859072_38fcfd6cf1e7933dffad.jpg"
+    // Match: starts with digits followed by underscore and hex chars
+    if (/^\d+_[a-f0-9]+\.(jpg|jpeg|png|webp|gif)$/i.test(imgPath)) {
+        return `/product_images/${imgPath}`;
+    }
     // Legacy bare filename (e.g. product_395.jpg) → /uploads/<filename>
     return `/uploads/${imgPath}`;
 };
