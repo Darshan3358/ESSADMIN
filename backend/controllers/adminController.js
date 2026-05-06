@@ -306,7 +306,9 @@ const getDashboardStats = asyncHandler(async (req, res) => {
 
     const now = new Date();
     const startOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
-    const days = range === '30days' ? 30 : (range === '6months' ? 180 : (range === '12months' ? 365 : 7));
+    const days = (range === '30days' || range === '1M') ? 30 : 
+                 (range === '6months' || range === '6M') ? 180 : 
+                 (range === '12months' || range === '1Y') ? 365 : 7;
     const startDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
     startDate.setUTCDate(startDate.getUTCDate() - (days - 1));
 
