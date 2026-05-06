@@ -8,35 +8,36 @@ export default function TawkChat() {
     const scriptLoaded = useRef(false);
 
     useEffect(() => {
-        // 1. Initialize Tawk_API globally immediately
+        // Initialize Tawk_API globally
         // @ts-ignore
         window.Tawk_API = window.Tawk_API || {};
-        
+        // @ts-ignore
+        window.Tawk_LoadStart = new Date();
+
         const initTawk = () => {
             if (scriptLoaded.current) return;
-            if (window.location.host.includes('nxgridpxcnode91')) return;
             
-            // @ts-ignore
-            window.Tawk_LoadStart = new Date();
-
             const s1 = document.createElement("script");
             const s0 = document.getElementsByTagName("script")[0];
             s1.async = true;
             s1.src = 'https://embed.tawk.to/68022bc67bc83f19076d0c8d/1ip47m0r4';
             s1.charset = 'UTF-8';
             s1.setAttribute('crossorigin', '*');
-            s0.parentNode?.insertBefore(s1, s0);
+            
+            if (s0 && s0.parentNode) {
+                s0.parentNode.insertBefore(s1, s0);
+            } else {
+                document.head.appendChild(s1);
+            }
             scriptLoaded.current = true;
         };
 
-        // Load chat widget after a short delay for better performance
-        const timeout = setTimeout(initTawk, 1000);
-
-        return () => clearTimeout(timeout);
+        // Load immediately
+        initTawk();
     }, []);
 
     useEffect(() => {
-        // 2. Update User Identity whenever user state changes
+        // Update User Identity whenever user state changes
         // @ts-ignore
         if (user && window.Tawk_API) {
             const visitorData = {
