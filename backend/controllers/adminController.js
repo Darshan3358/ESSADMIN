@@ -332,7 +332,7 @@ const getDashboardStats = asyncHandler(async (req, res) => {
         newSellers,
         rawStatsResult
     ] = await Promise.all([
-        Seller.countDocuments({ role: 'seller' }),
+        Seller.countDocuments({}),
         Product.countDocuments({ isDeleted: { $ne: true } }),
         Order.countDocuments({}),
         Recharge.countDocuments({}),
