@@ -337,6 +337,21 @@ const refetchChartData = async (range: DateRange) => {
                                     <h3 className="text-3xl font-black text-white tracking-tight drop-shadow-md text-center">{stats.planName}</h3>
                                 </div>
 
+                                {/* Features List */}
+                                <div className="flex flex-wrap justify-center gap-2 mb-6">
+                                    {stats.planFeatures && stats.planFeatures.length > 0 ? (
+                                        stats.planFeatures.map((f: string, i: number) => (
+                                            <span key={i} className="px-3 py-1.5 bg-white/10 border border-white/20 rounded-xl text-[10px] font-bold text-white backdrop-blur-md flex items-center gap-1.5">
+                                                <CheckCircle2 className="w-3 h-3 text-blue-200" /> {f}
+                                            </span>
+                                        ))
+                                    ) : (
+                                        <span className="px-3 py-1.5 bg-white/10 border border-white/20 rounded-xl text-[10px] font-bold text-white backdrop-blur-md">
+                                            Standard Selling Features
+                                        </span>
+                                    )}
+                                </div>
+
                                 {/* UI Elements from Image */}
                                 <div className="space-y-6 mt-auto">
                                     <button onClick={() => router.push('/packages')} className="w-full flex items-center justify-center gap-2 py-4 bg-white text-primary-700 rounded-2xl font-black text-sm tracking-uppercase transition-all shadow-xl active:scale-95 shadow-white/10">
