@@ -1,25 +1,19 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 
 export default function TawkChat() {
     const { user } = useAuth();
+    const scriptLoaded = useRef(false);
 
     useEffect(() => {
-        if (!user) return;
-
-        // 1. Pre-initialize Tawk_API with user info BEFORE the script loads
+        // 1. Initialize Tawk_API globally immediately
         // @ts-ignore
         window.Tawk_API = window.Tawk_API || {};
-        // @ts-ignore
-        window.Tawk_API.visitor = {
-            name: user.shop_name || user.name || 'Seller',
-            email: user.email
-        };
-
-        // 2. Load the script
+        
         const initTawk = () => {
+            if (scriptLoaded.current) return;
             if (window.location.host.includes('nxgridpxcnode91')) return;
             
             // @ts-ignore
@@ -32,15 +26,17 @@ export default function TawkChat() {
             s1.charset = 'UTF-8';
             s1.setAttribute('crossorigin', '*');
             s0.parentNode?.insertBefore(s1, s0);
+            scriptLoaded.current = true;
         };
 
-        // Delay to allow Auth state to settle
-        const timeout = setTimeout(initTawk, 2000);
+        // Load chat widget after a short delay for better performance
+        const timeout = setTimeout(initTawk, 1000);
 
         return () => clearTimeout(timeout);
-    }, [user]);
+    }, []);
 
     useEffect(() => {
+        // 2. Update User Identity whenever user state changes
         // @ts-ignore
         if (user && window.Tawk_API) {
             const visitorData = {
@@ -51,17 +47,25 @@ export default function TawkChat() {
                 'seller_id': user._id
             };
 
+            // Set visitor object for identification
             // @ts-ignore
-            window.Tawk_API.onLoad = function() {
-                // @ts-ignore
-                window.Tawk_API.setAttributes(visitorData);
+            window.Tawk_API.visitor = {
+                name: visitorData.name,
+                email: visitorData.email
             };
 
-            // If already loaded, update attributes immediately
+            // Set attributes if Tawk is already loaded
             // @ts-ignore
             if (typeof window.Tawk_API.setAttributes === 'function') {
                 // @ts-ignore
                 window.Tawk_API.setAttributes(visitorData);
+            } else {
+                // Otherwise set it to run onLoad
+                // @ts-ignore
+                window.Tawk_API.onLoad = function() {
+                    // @ts-ignore
+                    window.Tawk_API.setAttributes(visitorData);
+                };
             }
         }
     }, [user]);
