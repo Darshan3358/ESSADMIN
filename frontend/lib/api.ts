@@ -17,16 +17,26 @@ export const SERVER_URL = (() => {
 })();
 
 /**
- * Robust helper to get the full URL for a static asset
- * @param path The relative path (e.g. /uploads/...) or full URL
+ * Robust helper to get the full URL for a static asset.
+ * In production, NEXT_PUBLIC_API_URL is relative (/api), so Next.js rewrites
+ * handle proxying. We must NOT prepend the origin in that case — just return
+ * the path as-is so the browser fetches it through the Next.js proxy.
  */
 export const getFullImageUrl = (path: string | null | undefined): string => {
     if (!path) return '';
+    // Already a full URL — use directly
     if (path.startsWith('http')) return path;
-    
+
     const cleanPath = path.startsWith('/') ? path : `/${path}`;
+
+    // If API_URL is relative (e.g. /api), we're in production behind Next.js rewrites.
+    // Return the path as-is so the browser uses the same origin and rewrites apply.
+    if (API_URL.startsWith('/')) {
+        return cleanPath;
+    }
+
+    // In dev (absolute URL like http://localhost:5001/api), prepend the server base
     const cleanServerUrl = SERVER_URL.endsWith('/') ? SERVER_URL.slice(0, -1) : SERVER_URL;
-    
     return `${cleanServerUrl}${cleanPath}`;
 };
 
