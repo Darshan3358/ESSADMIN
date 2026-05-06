@@ -307,7 +307,7 @@ const getDashboardStats = asyncHandler(async (req, res) => {
         return res.json({ success: true, stats: cached.data });
     }
     */
-    console.log(`[AdminStats] Fetching for range: ${range} (days: ${days})`);
+    // Note: `days` is declared below — log moved after declaration
 
     const now = new Date();
     const startOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
@@ -316,6 +316,7 @@ const getDashboardStats = asyncHandler(async (req, res) => {
             (range === '12months' || range === '1Y') ? 365 : 7;
     const startDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
     startDate.setUTCDate(startDate.getUTCDate() - (days - 1));
+    console.log(`[AdminStats] Fetching for range: ${range} (days: ${days})`);
 
     // 2. Parallel Execution of ALL DB queries
     const [
@@ -332,7 +333,7 @@ const getDashboardStats = asyncHandler(async (req, res) => {
         newSellers,
         rawStatsResult
     ] = await Promise.all([
-        Promise.resolve(999), // Seller.countDocuments({}),
+        Seller.countDocuments({}),
         Product.countDocuments({ isDeleted: { $ne: true } }),
         Order.countDocuments({}),
         Recharge.countDocuments({}),
@@ -362,6 +363,7 @@ const getDashboardStats = asyncHandler(async (req, res) => {
     const totalRevenue = rechargeRevenue.length > 0 ? rechargeRevenue[0].total : 0;
     const statsMap = {};
     rawStatsResult.forEach(item => { statsMap[item._id] = item; });
+    const chartData = [];
 
     const interval = days > 30 ? (days === 180 ? 7 : 30) : 1;
     const loops = Math.ceil(days / interval);
