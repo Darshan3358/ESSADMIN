@@ -45,7 +45,7 @@ export default function AdminDashboardPage() {
 
     useEffect(() => {
         const token = getToken();
-        fetch(`${apiUrl}/admin/stats?range=${range}`, { headers: { Authorization: `Bearer ${token}` } })
+        fetch(`${apiUrl}/admin/stats?range=${range}&t=${Date.now()}`, { headers: { Authorization: `Bearer ${token}` } })
             .then(r => { if (!r.ok) throw new Error(); return r.json(); })
             .then(d => { if (d.success) { setStats(d.stats); if (d.stats.chartData) setChartData(d.stats.chartData); } })
             .catch(() => {})
