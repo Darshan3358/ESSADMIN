@@ -45,7 +45,7 @@ export default function RootLayout({
                         {children}
                     </LanguageProvider>
                 </AuthProvider>
-                <Script id="tawk-to" strategy="afterInteractive">
+                <Script id="tawk-to" strategy="lazyOnload">
                     {`
                         (function(){
                         if (window.location.host.includes('nxgridpxcnode91')) return;
