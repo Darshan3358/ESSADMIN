@@ -424,7 +424,8 @@ const getDashboardStats = asyncHandler(async (req, res) => {
 
     res.json({
         success: true,
-        stats
+        stats,
+        _debug_ts: Date.now()
     });
 });
 
