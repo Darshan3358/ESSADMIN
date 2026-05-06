@@ -131,65 +131,32 @@ exports.getDashboardStats = async (req, res) => {
         const startOfLastMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
 
         const getSalesForPeriod = async (start, end) => {
-            const startStr = start.toISOString().split('T')[0]; // Just YYYY-MM-DD
             const query = {
                 seller_id: { $in: sellerIdFilter },
-                status: { $in: ['pending', 'processing', 'shipped', 'completed', 'delivered', 'Pending', 'Processing', 'Shipped', 'Completed', 'Delivered'] },
-                $or: [
-                    { createdAt: { $gte: start } },
-                    { created_at: { $gte: startStr } } // More lenient for legacy strings
-                ]
+                status: { $nin: ['cancelled', 'Cancelled'] },
+                createdAt: { $gte: start }
             };
-            if (end) {
-                const endStr = end.toISOString().split('T')[0];
-                query.$or = query.$or.map(cond => {
-                    const field = Object.keys(cond)[0];
-                    const val = field === 'createdAt' ? end : endStr;
-                    return { 
-                        $and: [
-                            cond,
-                            { [field]: { $lt: val } }
-                        ]
-                    };
-                });
-            }
+            if (end) query.createdAt.$lt = end;
 
             const res = await Order.aggregate([
                 { $match: query },
-                {
-                    $group: {
-                        _id: null,
-                        sales: { $sum: { $toDouble: { $ifNull: ["$order_total", 0] } } },
-                        cost: { $sum: { $toDouble: { $ifNull: ["$cost_amount", 0] } } }
-                    }
-                }
+                { $group: { _id: null, sales: { $sum: "$order_total" }, cost: { $sum: "$cost_amount" } } }
             ]);
             return res.length > 0 ? res[0] : { sales: 0, cost: 0 };
         };
 
-        const [todayData, thisMonthData, lastMonthData, allTimeProfitResult, shopProfile] = await Promise.all([
+        const [todayData, thisMonthData, lastMonthData, allTimeSalesResult, shopProfile] = await Promise.all([
             getSalesForPeriod(startOfToday),
             getSalesForPeriod(startOfMonth),
             getSalesForPeriod(startOfLastMonth, startOfMonth),
             Order.aggregate([
-                {
-                    $match: {
-                        seller_id: { $in: sellerIdFilter },
-                        status: { $in: ['pending', 'processing', 'shipped', 'completed', 'delivered', 'Pending', 'Processing', 'Shipped', 'Completed', 'Delivered'] }
-                    }
-                },
-                {
-                    $group: {
-                        _id: null,
-                        totalSales: { $sum: { $toDouble: { $ifNull: ["$order_total", 0] } } },
-                        totalCost: { $sum: { $toDouble: { $ifNull: ["$cost_amount", 0] } } }
-                    }
-                }
+                { $match: { seller_id: { $in: sellerIdFilter }, status: { $nin: ['cancelled', 'Cancelled'] } } },
+                { $group: { _id: null, sales: { $sum: "$order_total" }, cost: { $sum: "$cost_amount" } } }
             ]),
             ShopProfile.findOne({ seller_id: sellerId }).lean()
         ]);
-        const allTimeSales = allTimeProfitResult.length > 0 ? allTimeProfitResult[0].totalSales : 0;
-        const allTimeCost = allTimeProfitResult.length > 0 ? allTimeProfitResult[0].totalCost : 0;
+        const allTimeSales = allTimeSalesResult.length > 0 ? allTimeSalesResult[0].sales : 0;
+        const allTimeCost = allTimeSalesResult.length > 0 ? allTimeSalesResult[0].cost : 0;
         const netProfit = Math.max(0, allTimeSales - allTimeCost);
         const netProfitMargin = allTimeSales > 0 ? ((netProfit / allTimeSales) * 100).toFixed(1) : 0;
 
@@ -205,35 +172,15 @@ exports.getDashboardStats = async (req, res) => {
             {
                 $match: {
                     seller_id: { $in: sellerIdFilter },
-                    status: { $in: ['pending', 'processing', 'shipped', 'completed', 'delivered', 'Pending', 'Processing', 'Shipped', 'Completed', 'Delivered'] },
-                    $or: [
-                        { createdAt: { $gte: startDate } },
-                        { created_at: { $gte: startDate.toISOString().split('T')[0] } }
-                    ]
-                }
-            },
-            {
-                $project: {
-                    date: { 
-                        $ifNull: [
-                            "$createdAt", 
-                            { 
-                                $dateFromString: { 
-                                    dateString: "$created_at",
-                                    onError: new Date(0) // Fallback for invalid strings
-                                } 
-                            } 
-                        ] 
-                    },
-                    order_total: 1,
-                    cost_amount: 1
+                    status: { $nin: ['cancelled', 'Cancelled'] },
+                    createdAt: { $gte: startDate }
                 }
             },
             {
                 $group: {
-                    _id: { $dateToString: { format: "%Y-%m-%d", date: "$date" } },
-                    sales: { $sum: { $toDouble: { $ifNull: ["$order_total", 0] } } },
-                    profit: { $sum: { $subtract: [{ $toDouble: { $ifNull: ["$order_total", 0] } }, { $toDouble: { $ifNull: ["$cost_amount", 0] } }] } },
+                    _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+                    sales: { $sum: "$order_total" },
+                    profit: { $sum: { $subtract: ["$order_total", "$cost_amount"] } },
                     orders: { $sum: 1 }
                 }
             }
