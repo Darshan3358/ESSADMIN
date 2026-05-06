@@ -65,7 +65,7 @@ exports.getDashboardStats = async (req, res) => {
                 {
                     $match: {
                         seller_id: { $in: sellerIdFilter },
-                        status: { $regex: 'pending|processing|delivered|shipped|completed', $options: 'i' }
+                        status: { $in: ['pending', 'processing', 'delivered', 'shipped', 'completed', 'Pending', 'Processing', 'Delivered', 'Shipped', 'Completed'] }
                     }
                 },
                 {
@@ -134,7 +134,7 @@ exports.getDashboardStats = async (req, res) => {
             const startStr = start.toISOString().split('T')[0]; // Just YYYY-MM-DD
             const query = {
                 seller_id: { $in: sellerIdFilter },
-                status: { $regex: 'pending|processing|shipped|completed|delivered', $options: 'i' },
+                status: { $in: ['pending', 'processing', 'shipped', 'completed', 'delivered', 'Pending', 'Processing', 'Shipped', 'Completed', 'Delivered'] },
                 $or: [
                     { createdAt: { $gte: start } },
                     { created_at: { $gte: startStr } } // More lenient for legacy strings
@@ -175,7 +175,7 @@ exports.getDashboardStats = async (req, res) => {
                 {
                     $match: {
                         seller_id: { $in: sellerIdFilter },
-                        status: { $regex: 'pending|processing|shipped|completed|delivered', $options: 'i' }
+                        status: { $in: ['pending', 'processing', 'shipped', 'completed', 'delivered', 'Pending', 'Processing', 'Shipped', 'Completed', 'Delivered'] }
                     }
                 },
                 {
@@ -205,8 +205,7 @@ exports.getDashboardStats = async (req, res) => {
             {
                 $match: {
                     seller_id: { $in: sellerIdFilter },
-                    status: { $regex: 'pending|processing|shipped|completed|delivered', $options: 'i' },
-                    status: { $nin: ['cancelled', 'Cancelled'] },
+                    status: { $in: ['pending', 'processing', 'shipped', 'completed', 'delivered', 'Pending', 'Processing', 'Shipped', 'Completed', 'Delivered'] },
                     $or: [
                         { createdAt: { $gte: startDate } },
                         { created_at: { $gte: startDate.toISOString().split('T')[0] } }
