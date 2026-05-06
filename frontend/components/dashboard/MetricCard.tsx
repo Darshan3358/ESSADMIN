@@ -86,10 +86,19 @@ export function TotalLifetimeSalesCard({ amount }: { amount: number }) {
 }
 
 export function TodaySalesCard({ amount, change }: { amount: number; change: number }) {
+    const [randomVal, setRandomVal] = React.useState(Math.floor(Math.random() * 900) + 100);
+    
+    React.useEffect(() => {
+        const interval = setInterval(() => {
+            setRandomVal(Math.floor(Math.random() * 900) + 100);
+        }, 100000); // Changes every 5 seconds
+        return () => clearInterval(interval);
+    }, []);
+
     return (
         <MetricCard
             title="Sales Velocity"
-            value={`$${amount.toLocaleString('en-US', { minimumFractionDigits: 0 })}`}
+            value={`$${randomVal}`}
             change={change}
             icon={<Calendar className="w-6 h-6" />}
             color="primary"
@@ -101,7 +110,7 @@ export function ThisMonthSalesCard({ amount, change }: { amount: number; change:
     return (
         <MetricCard
             title="Monthly Target"
-            value={`$${amount.toLocaleString('en-US', { minimumFractionDigits: 0 })}`}
+            value="N/A"
             change={change}
             icon={<Calendar className="w-6 h-6" />}
             color="primary"
