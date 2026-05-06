@@ -40,7 +40,8 @@ export default function DashboardPage() {
         views: 0,
         usedViews: 0,
         remainingViews: 0,
-        planFeatures: [] as string[]
+        planFeatures: [] as string[],
+        categoryCounts: [] as any[]
     });
     
     const [planDisplayData, setPlanDisplayData] = useState<any>({
@@ -74,6 +75,7 @@ const mapStats = (dbStats: any) => ({
     usedViews: dbStats.used_views || 0,
     remainingViews: dbStats.remaining_views || 0,
     planFeatures: dbStats.planFeatures || [],
+    categoryCounts: dbStats.categoryCounts || []
 });
 
 const refetchChartData = async (range: DateRange) => {
@@ -303,78 +305,121 @@ const refetchChartData = async (range: DateRange) => {
                     </div>
                 </section>
 
-                {/* Premium Plan Card - Moved Above Analytics */}
-                <div className="w-full animate-slide-up stagger-3">
+                {/* Plan and Category Split */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-slide-up stagger-3">
+                    {/* Premium Plan Card */}
                     <section className="text-left">
-                        <div className="relative overflow-hidden rounded-[2.5rem] shadow-[0_25px_60px_rgba(0,0,0,0.2)] transition-all duration-500" style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #60a5fa 50%, #EC4899 100%)' }}>
+                        <div className="relative overflow-hidden rounded-[2.5rem] shadow-[0_25px_60px_rgba(0,0,0,0.2)] transition-all duration-500 h-full" style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #60a5fa 50%, #EC4899 100%)' }}>
                             <div className="absolute inset-0 bg-white/5 backdrop-blur-[2px]"></div>
                             <div className="absolute -top-24 -right-24 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
 
                             <div className="relative z-10 p-5 md:p-8 flex flex-col h-full">
                                 {/* Header */}
-                                <div className="flex items-start justify-between mb-10">
+                                <div className="flex items-start justify-between mb-8">
                                     <div className="flex items-center gap-4">
-                                        <div className="w-14 h-14 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/30 shadow-inner">
-                                            <Sparkles className="w-8 h-8 text-white" />
+                                        <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/30 shadow-inner">
+                                            <Sparkles className="w-6 h-6 text-white" />
                                         </div>
                                         <div>
-                                            <p className="text-xs font-black text-white uppercase tracking-[0.2em]">Current Plan</p>
-                                            <p className="text-sm font-bold text-white/70">Premium subscription</p>
+                                            <p className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Current Plan</p>
+                                            <p className="text-xs font-bold text-white/70">Premium subscription</p>
                                         </div>
                                     </div>
-                                    <span className="text-xs font-black text-white bg-white/20 border border-white/30 px-5 py-2 rounded-full tracking-[0.15em] backdrop-blur-md uppercase">ACTIVE</span>
+                                    <span className="text-[10px] font-black text-white bg-white/20 border border-white/30 px-4 py-1.5 rounded-full tracking-[0.15em] backdrop-blur-md uppercase">ACTIVE</span>
                                 </div>
 
                                 {/* Central Diamond */}
-                                <div className="flex flex-col items-center mb-10">
-                                    <div className="w-28 h-28 bg-white/20 backdrop-blur-xl rounded-full flex items-center justify-center shadow-[0_15px_40px_rgba(0,0,0,0.2)] border border-white/30 mb-8 relative">
+                                <div className="flex flex-col items-center mb-8">
+                                    <div className="w-20 h-20 bg-white/20 backdrop-blur-xl rounded-full flex items-center justify-center shadow-[0_15px_40px_rgba(0,0,0,0.2)] border border-white/30 mb-6 relative">
                                         <div className="absolute inset-0 bg-white/30 rounded-full blur-2xl scale-75"></div>
-                                        <Gem className="w-14 h-14 text-white drop-shadow-2xl relative z-10" />
+                                        <Gem className="w-10 h-10 text-white drop-shadow-2xl relative z-10" />
                                     </div>
-                                    <h3 className="text-5xl font-black text-white tracking-tight drop-shadow-md text-center">{stats.planName}</h3>
-                                </div>
-
-                                {/* Features Pills - Dynamic from Stats */}
-                                <div className="flex flex-wrap justify-center gap-3 mb-10">
-                                    {stats.planFeatures && stats.planFeatures.length > 0 ? (
-                                        stats.planFeatures.map((f: string, i: number) => (
-                                            <span key={i} className="px-5 py-2.5 bg-white/10 border border-white/20 rounded-2xl text-xs font-bold text-white backdrop-blur-md flex items-center gap-2">
-                                                <CheckCircle2 className="w-3.5 h-3.5 text-blue-200" /> {f}
-                                            </span>
-                                        ))
-                                    ) : (
-                                        <span className="px-5 py-2.5 bg-white/10 border border-white/20 rounded-2xl text-xs font-bold text-white backdrop-blur-md">
-                                            Standard Selling Features
-                                        </span>
-                                    )}
+                                    <h3 className="text-3xl font-black text-white tracking-tight drop-shadow-md text-center">{stats.planName}</h3>
                                 </div>
 
                                 {/* UI Elements from Image */}
-                                <div className="space-y-8">
-                                    <button onClick={() => router.push('/packages')} className="w-full flex items-center justify-center gap-3 py-5 bg-white text-primary-700 rounded-[1.8rem] font-black text-lg tracking-uppercase transition-all shadow-xl active:scale-95 shadow-white/10">
-                                        Upgrade Level <ArrowRight className="w-6 h-6" />
+                                <div className="space-y-6 mt-auto">
+                                    <button onClick={() => router.push('/packages')} className="w-full flex items-center justify-center gap-2 py-4 bg-white text-primary-700 rounded-2xl font-black text-sm tracking-uppercase transition-all shadow-xl active:scale-95 shadow-white/10">
+                                        Upgrade Level <ArrowRight className="w-4 h-4" />
                                     </button>
 
-                                    <div className="grid grid-cols-3 gap-6 text-center pt-4 border-t border-white/10">
+                                    <div className="grid grid-cols-3 gap-4 text-center pt-4 border-t border-white/10">
                                         <div>
-                                            <p className="text-2xl font-black text-white">
+                                            <p className="text-lg font-black text-white">
                                                 {stats.usedViews.toLocaleString()}
                                             </p>
-                                            <p className="text-xs font-bold text-white/50 uppercase tracking-widest mt-1">Used</p>
+                                            <p className="text-[9px] font-bold text-white/50 uppercase tracking-widest mt-0.5">Used</p>
                                         </div>
                                         <div>
-                                            <p className="text-2xl font-black text-white">
+                                            <p className="text-lg font-black text-white">
                                                 {stats.remainingViews.toLocaleString()}
                                             </p>
-                                            <p className="text-xs font-bold text-white/50 uppercase tracking-widest mt-1">Remaining</p>
+                                            <p className="text-[9px] font-bold text-white/50 uppercase tracking-widest mt-0.5">Remaining</p>
                                         </div>
                                         <div>
-                                            <p className="text-2xl font-black text-pink-200">
+                                            <p className="text-lg font-black text-pink-200">
                                                 {stats.views.toLocaleString()}
                                             </p>
-                                            <p className="text-xs font-bold text-white/50 uppercase tracking-widest mt-1">Views</p>
+                                            <p className="text-[9px] font-bold text-white/50 uppercase tracking-widest mt-0.5">Total</p>
                                         </div>
                                     </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Products by Category Card */}
+                    <section className="text-left">
+                        <div className="relative overflow-hidden rounded-[2.5rem] bg-[#020617] border border-white/5 shadow-2xl h-full p-5 md:p-8 flex flex-col">
+                            <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500/5 blur-[100px] pointer-events-none" />
+                            
+                            <div className="flex items-center gap-4 mb-8">
+                                <div className="w-12 h-12 bg-primary-500/10 rounded-2xl flex items-center justify-center border border-primary-500/20">
+                                    <Package className="w-6 h-6 text-primary-500" />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-black text-white tracking-tight">Products by Category</h3>
+                                    <p className="text-xs font-bold text-white/40 uppercase tracking-widest">Inventory Distribution</p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-4 overflow-y-auto max-h-[350px] pr-2 custom-scrollbar">
+                                {stats.categoryCounts && stats.categoryCounts.length > 0 ? (
+                                    stats.categoryCounts.sort((a: any, b: any) => b.count - a.count).map((cat: any, i: number) => {
+                                        const percentage = Math.round((cat.count / stats.totalProducts) * 100) || 0;
+                                        return (
+                                            <div key={i} className="group p-4 bg-white/5 border border-white/5 rounded-2xl transition-all hover:bg-white/10 hover:border-white/10">
+                                                <div className="flex justify-between items-center mb-2">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-2 h-2 rounded-full bg-primary-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]"></div>
+                                                        <span className="text-sm font-bold text-white/90">{cat._id || 'Uncategorized'}</span>
+                                                    </div>
+                                                    <span className="text-xs font-black text-primary-400 bg-primary-500/10 px-2 py-0.5 rounded-lg">{cat.count} items</span>
+                                                </div>
+                                                <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                                                    <div 
+                                                        className="h-full bg-gradient-to-r from-primary-500 to-blue-400 rounded-full transition-all duration-1000 group-hover:from-primary-400 group-hover:to-blue-300"
+                                                        style={{ width: `${percentage}%` }}
+                                                    ></div>
+                                                </div>
+                                                <div className="mt-1 text-right">
+                                                    <span className="text-[10px] font-bold text-white/20 uppercase tracking-widest">{percentage}% of stock</span>
+                                                </div>
+                                            </div>
+                                        );
+                                    })
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center h-40 text-white/20 gap-3">
+                                        <Box className="w-12 h-12 opacity-20" />
+                                        <p className="text-sm font-bold">No category data available</p>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="mt-auto pt-6 border-t border-white/5">
+                                <div className="flex justify-between items-center">
+                                    <p className="text-xs font-bold text-white/40 uppercase tracking-widest">Total Inventory</p>
+                                    <p className="text-xl font-black text-white">{stats.totalProducts} <span className="text-[10px] font-bold opacity-40">ITEMS</span></p>
                                 </div>
                             </div>
                         </div>
