@@ -110,21 +110,10 @@ const refetchChartData = async (range: DateRange) => {
             setIsLoading(true);
             try {
                 // Fetch all data in parallel for maximum speed
-                const [profileRes, shopRes, statsRes, productsRes] = await Promise.all([
-                    api.get('/auth/profile'),
-                    api.get('/sellers/shop-settings'),
+                const [statsRes, productsRes] = await Promise.all([
                     api.get('/sellers/stats'),
                     api.get('/products/featured')
                 ]);
-
-                // 1. Update Profile/Shop
-                if (profileRes.success || profileRes._id) {
-                    const freshUser = profileRes.success ? profileRes.data : profileRes;
-                    if (shopRes.success && shopRes.data?.shop_name) {
-                        freshUser.shop_name = shopRes.data.shop_name;
-                    }
-                    updateUser(freshUser);
-                }
 
                 // 2. Update Stats
                 if (statsRes.success) {

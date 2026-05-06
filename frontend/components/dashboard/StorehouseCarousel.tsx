@@ -29,7 +29,7 @@ export default function StorehouseCarousel({ onProductAdded }: StorehouseCarouse
         try {
             // Get curated products and settings
             const [res, myRes, settRes] = await Promise.all([
-                api.get('/products?limit=50&inStorehouseCarousel=true&sort=-createdAt'),
+                api.get('/products?limit=12&inStorehouseCarousel=true&sort=-createdAt'),
                 api.get('/products/my-product-ids'),
                 api.get('/settings/carousel')
             ]);
