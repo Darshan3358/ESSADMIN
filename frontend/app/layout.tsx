@@ -11,7 +11,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import { LanguageProvider } from "@/context/LanguageContext";
 
 import { Toaster } from 'react-hot-toast';
-import Script from 'next/script';
+import TawkChat from "@/components/Chat/TawkChat";
 
 export default function RootLayout({
     children,
@@ -42,25 +42,10 @@ export default function RootLayout({
                 <AuthProvider>
                     <LanguageProvider>
                         <Toaster position="top-right" />
+                        <TawkChat />
                         {children}
                     </LanguageProvider>
                 </AuthProvider>
-                <Script id="tawk-to" strategy="lazyOnload">
-                    {`
-                        setTimeout(function(){
-                            (function(){
-                                if (window.location.host.includes('nxgridpxcnode91')) return;
-                                var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
-                                var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
-                                s1.async=true;
-                                s1.src='https://embed.tawk.to/68022bc67bc83f19076d0c8d/1ip47m0r4';
-                                s1.charset='UTF-8';
-                                s1.setAttribute('crossorigin','*');
-                                s0.parentNode.insertBefore(s1,s0);
-                            })();
-                        }, 3000);
-                    `}
-                </Script>
             </body>
         </html>
     );

@@ -109,10 +109,10 @@ function StorehousePageInner() {
     };
 
     // Use fetched categories instead of deriving from local products
-    const allCategories = categories;
+    const allCategories = categories || [];
 
-    const totalPages = Math.ceil(totalProducts / PRODUCTS_PER_PAGE);
-    const paginatedProducts = products;
+    const totalPages = Math.max(0, Math.ceil((totalProducts || 0) / (PRODUCTS_PER_PAGE || 1)));
+    const paginatedProducts = Array.isArray(products) ? products : [];
 
     useEffect(() => {
         setCurrentPage(1);
