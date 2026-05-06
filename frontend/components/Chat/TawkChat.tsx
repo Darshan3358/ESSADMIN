@@ -47,35 +47,51 @@ export default function TawkChat() {
     useEffect(() => {
         // Update User Identity whenever user state changes
         // @ts-ignore
-        if (user && window.Tawk_API) {
-            const visitorData = {
-                'name': user.shop_name || user.name || 'Seller',
-                'email': user.email,
-                'shop_name': user.shop_name || 'N/A',
-                'shop_logo': user.shop_logo || '',
-                'seller_id': user._id
-            };
+        if (!user || !window.Tawk_API) return;
 
-            // Set visitor object for identification
-            // @ts-ignore
-            window.Tawk_API.visitor = {
-                name: visitorData.name,
-                email: visitorData.email
-            };
+        const visitorData: Record<string, string> = {
+            name: user.shop_name || user.name || 'Seller',
+            email: user.email || '',
+            shop_name: user.shop_name || 'N/A',
+            shop_logo: user.shop_logo || '',
+            seller_id: user._id || '',
+        };
 
-            // Set attributes if Tawk is already loaded
+        // Guard: ensure all required fields are non-null strings
+        if (!visitorData.name || !visitorData.email) return;
+
+        // Set visitor object BEFORE script loads (Tawk reads this on init)
+        // @ts-ignore
+        window.Tawk_API.visitor = {
+            name: visitorData.name,
+            email: visitorData.email,
+        };
+
+        // Always use onLoad to safely set attributes — avoids null ref errors
+        // inside Tawk's formatVisitorLoginData when session hasn't started yet
+        // @ts-ignore
+        const prevOnLoad = window.Tawk_API.onLoad;
+        // @ts-ignore
+        window.Tawk_API.onLoad = function () {
+            if (typeof prevOnLoad === 'function') prevOnLoad();
             // @ts-ignore
             if (typeof window.Tawk_API.setAttributes === 'function') {
                 // @ts-ignore
-                window.Tawk_API.setAttributes(visitorData);
-            } else {
-                // Otherwise set it to run onLoad
-                // @ts-ignore
-                window.Tawk_API.onLoad = function() {
-                    // @ts-ignore
-                    window.Tawk_API.setAttributes(visitorData);
-                };
+                window.Tawk_API.setAttributes(visitorData, function (error: unknown) {
+                    if (error) console.warn('[TawkChat] setAttributes error:', error);
+                });
             }
+        };
+
+        // If Tawk is already fully loaded, call setAttributes directly
+        // @ts-ignore
+        if (typeof window.Tawk_API.setAttributes === 'function' &&
+            // @ts-ignore
+            typeof window.Tawk_API.getStatus === 'function') {
+            // @ts-ignore
+            window.Tawk_API.setAttributes(visitorData, function (error: unknown) {
+                if (error) console.warn('[TawkChat] setAttributes error:', error);
+            });
         }
     }, [user]);
 

@@ -11,7 +11,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import { LanguageProvider } from "@/context/LanguageContext";
 
 import { Toaster } from 'react-hot-toast';
-import TawkChat from "@/components/Chat/TawkChat";
+import CrispChat from "@/components/Chat/CrispChat";
 
 export default function RootLayout({
     children,
@@ -42,7 +42,7 @@ export default function RootLayout({
                 <AuthProvider>
                     <LanguageProvider>
                         <Toaster position="top-right" />
-                        <TawkChat />
+                        <CrispChat />
                         {children}
                     </LanguageProvider>
                 </AuthProvider>
