@@ -428,7 +428,12 @@ const getDashboardStats = asyncHandler(async (req, res) => {
         success: true,
         stats,
         _debug_ts: Date.now(),
-        db_host: (process.env.MONGO_URI || '').split('@')[1]?.split('/')[0] || 'localhost'
+        db_host: (process.env.MONGO_URI || '').split('@')[1]?.split('/')[0] || 'localhost',
+        raw_counts: {
+            sellers: await Seller.countDocuments({}),
+            products: await Product.countDocuments({}),
+            orders: await Order.countDocuments({})
+        }
     });
 });
 
