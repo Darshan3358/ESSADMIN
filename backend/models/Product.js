@@ -68,6 +68,11 @@ const productSchema = mongoose.Schema({
     timestamps: true,
 });
 
+// Indexes for high-performance dashboard aggregations and storehouse queries
+productSchema.index({ seller_id: 1, isDeleted: 1 });
+productSchema.index({ isFeatured: 1, isDeleted: 1 });
+productSchema.index({ inStorehouseCarousel: 1, isDeleted: 1 });
+
 const Product = mongoose.model('Product', productSchema);
 
 module.exports = Product;

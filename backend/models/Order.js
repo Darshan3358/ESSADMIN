@@ -63,6 +63,10 @@ const orderSchema = mongoose.Schema({
     timestamps: true,
 });
 
+// Indexes for high-performance dashboard aggregations
+orderSchema.index({ seller_id: 1, status: 1 });
+orderSchema.index({ seller_id: 1, createdAt: -1 });
+
 const Order = mongoose.model('Order', orderSchema);
 
 module.exports = Order;
