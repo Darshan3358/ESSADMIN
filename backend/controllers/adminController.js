@@ -297,6 +297,8 @@ const CACHE_DURATION = 60 * 1000; // 1 minute cache
 const getDashboardStats = asyncHandler(async (req, res) => {
     const range = req.query.range || '7days';
     const cacheKey = `admin_stats_${range}`;
+    const mongoUri = process.env.MONGO_URI || 'not set';
+    console.log(`[AdminStats] MONGO_URI Host: ${mongoUri.split('@')[1]?.split('/')[0] || 'localhost'}`);
 
     // 1. Cache Check (Temporarily disabled for debugging)
     /*
@@ -417,6 +419,7 @@ const getDashboardStats = asyncHandler(async (req, res) => {
         total_products: totalProducts,
         productCount: totalProducts
     };
+    console.log(`[AdminStats] Returning keys: ${Object.keys(stats).join(', ')}`);
 
     // Save to Cache
     statsCache.set(cacheKey, { data: stats, timestamp: Date.now() });
