@@ -30,7 +30,7 @@ import {
     ChevronDown,
     Copy,
 } from 'lucide-react';
-import { api } from '@/lib/api';
+import { api, getFullImageUrl } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
 import { useTranslate } from '@/hooks/useTranslate';
 
@@ -292,7 +292,7 @@ export default function OrderDetailsPage() {
                                             <td className="px-8 py-6">
                                                 <div className="w-16 h-16 bg-gray-100 dark:bg-slate-800 rounded-xl overflow-hidden border border-gray-200 dark:border-slate-700">
                                                     {item.product?.image ? (
-                                                        <img src={item.product.image} alt={item.product.name} className="w-full h-full object-cover" />
+                                                        <img src={getFullImageUrl(item.product.image)} alt={item.product.name} className="w-full h-full object-cover" />
                                                     ) : (
                                                         <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-slate-600">
                                                             <Package size={24} />
