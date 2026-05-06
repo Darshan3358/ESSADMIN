@@ -47,16 +47,18 @@ export default function RootLayout({
                 </AuthProvider>
                 <Script id="tawk-to" strategy="lazyOnload">
                     {`
-                        (function(){
-                        if (window.location.host.includes('nxgridpxcnode91')) return;
-                        var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
-                        var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
-                        s1.async=true;
-                        s1.src='https://embed.tawk.to/68022bc67bc83f19076d0c8d/1ip47m0r4';
-                        s1.charset='UTF-8';
-                        s1.setAttribute('crossorigin','*');
-                        s0.parentNode.insertBefore(s1,s0);
-                        })();
+                        setTimeout(function(){
+                            (function(){
+                                if (window.location.host.includes('nxgridpxcnode91')) return;
+                                var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
+                                var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
+                                s1.async=true;
+                                s1.src='https://embed.tawk.to/68022bc67bc83f19076d0c8d/1ip47m0r4';
+                                s1.charset='UTF-8';
+                                s1.setAttribute('crossorigin','*');
+                                s0.parentNode.insertBefore(s1,s0);
+                            })();
+                        }, 3000);
                     `}
                 </Script>
             </body>
