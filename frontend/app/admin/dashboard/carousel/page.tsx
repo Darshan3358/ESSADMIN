@@ -12,6 +12,8 @@ export default function CarouselManagement() {
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('All');
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
     const [settings, setSettings] = useState({ slidesPerView: 4 });
     const [saveLoading, setSaveLoading] = useState(false);
     const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -79,6 +81,13 @@ export default function CarouselManagement() {
         const matchesCategory = selectedCategory === 'All' || p.category === selectedCategory;
         return matchesSearch && matchesCategory;
     });
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery, selectedCategory]);
+
+    const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+    const paginatedProducts = filteredProducts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
     const carouselProducts = products.filter(p => p.inStorehouseCarousel);
 
@@ -198,14 +207,14 @@ export default function CarouselManagement() {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-white/5 text-slate-300">
-                                    {filteredProducts.map(p => (
+                                    {paginatedProducts.map(p => (
                                         <tr key={p._id} className="hover:bg-white/[0.02] transition-colors group">
                                             <td className="px-8 py-5">
                                                 <div className="flex items-center gap-4">
-                                                    <div className="w-12 h-12 bg-slate-800 rounded-xl overflow-hidden border border-white/5 flex items-center justify-center">
+                                                    <div className="w-20 h-20 bg-slate-800 rounded-xl overflow-hidden border border-white/5 flex items-center justify-center shrink-0">
                                                         {p.image ? (
                                                             <img src={p.image.startsWith('http') ? p.image : (p.image.startsWith('/') ? p.image : `/uploads/${p.image}`)} className="w-full h-full object-cover" />
-                                                        ) : <Package className="w-6 h-6 text-slate-600" />}
+                                                        ) : <Package className="w-8 h-8 text-slate-600" />}
                                                     </div>
                                                     <div>
                                                         <p className="font-bold text-white text-sm line-clamp-1">{p.name}</p>
@@ -241,6 +250,34 @@ export default function CarouselManagement() {
                                 <div className="p-20 text-center">
                                     <Package className="w-12 h-12 text-slate-700 mx-auto mb-4" />
                                     <p className="text-slate-500 font-bold">No products found matching your search.</p>
+                                </div>
+                            )}
+
+                            {/* Pagination Controls */}
+                            {totalPages > 1 && (
+                                <div className="px-8 py-5 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4 sticky bottom-0 bg-slate-900/95 backdrop-blur-md">
+                                    <span className="text-xs text-slate-500 font-bold tracking-widest uppercase">
+                                        Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredProducts.length)} of {filteredProducts.length} entries
+                                    </span>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                            disabled={currentPage === 1}
+                                            className="px-4 py-2 bg-slate-800 border border-white/10 hover:bg-slate-700 disabled:opacity-50 text-white rounded-xl transition-all text-sm font-bold active:scale-95"
+                                        >
+                                            Previous
+                                        </button>
+                                        <div className="px-4 py-2 bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded-xl font-bold text-sm">
+                                            {currentPage} / {totalPages}
+                                        </div>
+                                        <button
+                                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                            disabled={currentPage === totalPages}
+                                            className="px-4 py-2 bg-slate-800 border border-white/10 hover:bg-slate-700 disabled:opacity-50 text-white rounded-xl transition-all text-sm font-bold active:scale-95"
+                                        >
+                                            Next
+                                        </button>
+                                    </div>
                                 </div>
                             )}
                         </div>

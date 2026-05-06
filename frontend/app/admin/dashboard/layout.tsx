@@ -159,7 +159,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     {navItems.map((item) => {
                         const isActive = pathname === item.href;
                         return (
-                            <Link key={item.href} href={item.href} style={{ textDecoration: 'none' }} onClick={() => {
+                            <Link key={item.href} href={item.href} prefetch={false} style={{ textDecoration: 'none' }} onClick={() => {
                                 if (window.innerWidth < 768) setSidebarOpen(false);
                             }}>
                                 <div style={{

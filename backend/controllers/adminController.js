@@ -62,7 +62,7 @@ const getSellerStatsForAdmin = asyncHandler(async (req, res) => {
                 order_total_val: {
                     $cond: {
                         if: { $and: [{ $ne: ["$order_total", ""] }, { $ne: ["$order_total", null] }] },
-                        then: { $toDouble: "$order_total" },
+                        then: { $convert: { input: "$order_total", to: "double", onError: 0, onNull: 0 } },
                         else: 0
                     }
                 }
@@ -107,8 +107,8 @@ const getSellerStatsForAdmin = asyncHandler(async (req, res) => {
             {
                 $group: {
                     _id: null,
-                    sales: { $sum: { $toDouble: { $ifNull: ["$order_total", 0] } } },
-                    cost: { $sum: { $toDouble: { $ifNull: ["$cost_amount", 0] } } }
+                    sales: { $sum: { $convert: { input: "$order_total", to: "double", onError: 0, onNull: 0 } } },
+                    cost: { $sum: { $convert: { input: "$cost_amount", to: "double", onError: 0, onNull: 0 } } }
                 }
             }
         ]);
@@ -136,8 +136,8 @@ const getSellerStatsForAdmin = asyncHandler(async (req, res) => {
         {
             $group: {
                 _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
-                sales: { $sum: { $toDouble: { $ifNull: ["$order_total", 0] } } },
-                profit: { $sum: { $subtract: [{ $toDouble: { $ifNull: ["$order_total", 0] } }, { $toDouble: { $ifNull: ["$cost_amount", 0] } }] } },
+                sales: { $sum: { $convert: { input: "$order_total", to: "double", onError: 0, onNull: 0 } } },
+                profit: { $sum: { $subtract: [{ $convert: { input: "$order_total", to: "double", onError: 0, onNull: 0 } }, { $convert: { input: "$cost_amount", to: "double", onError: 0, onNull: 0 } }] } },
                 orders: { $sum: 1 }
             }
         }
@@ -201,7 +201,7 @@ const getSellerStatsForAdmin = asyncHandler(async (req, res) => {
             categoryCounts,
             netProfit: Math.max(0, totalSales - (await Order.aggregate([
                 { $match: { seller_id: { $in: sellerIdFilter }, status: { $regex: 'pending|processing|delivered|shipped|completed', $options: 'i' } } },
-                { $group: { _id: null, total: { $sum: { $toDouble: { $ifNull: ["$cost_amount", 0] } } } } }
+                { $group: { _id: null, total: { $sum: { $convert: { input: "$cost_amount", to: "double", onError: 0, onNull: 0 } } } } }
             ])).reduce((acc, curr) => acc + curr.total, 0)),
             avgOrderValue: totalOrders > 0 ? (totalSales / totalOrders) : 0,
         },
@@ -315,7 +315,7 @@ const getDashboardStats = asyncHandler(async (req, res) => {
         Withdraw.countDocuments({ status: 0 }),
         Recharge.aggregate([
             { $match: { status: 1 } },
-            { $group: { _id: null, total: { $sum: { $toDouble: '$amount' } } } }
+            { $group: { _id: null, total: { $sum: { $convert: { input: "$amount", to: "double", onError: 0, onNull: 0 } } } } }
         ])
     ]);
 
@@ -344,8 +344,8 @@ const getDashboardStats = asyncHandler(async (req, res) => {
         {
             $group: {
                 _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
-                sales: { $sum: { $toDouble: { $ifNull: ["$order_total", 0] } } },
-                profit: { $sum: { $subtract: [{ $toDouble: { $ifNull: ["$order_total", 0] } }, { $toDouble: { $ifNull: ["$cost_amount", 0] } }] } },
+                sales: { $sum: { $convert: { input: "$order_total", to: "double", onError: 0, onNull: 0 } } },
+                profit: { $sum: { $subtract: [{ $convert: { input: "$order_total", to: "double", onError: 0, onNull: 0 } }, { $convert: { input: "$cost_amount", to: "double", onError: 0, onNull: 0 } }] } },
                 orders: { $sum: 1 }
             }
         }

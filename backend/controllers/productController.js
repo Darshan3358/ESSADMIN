@@ -23,6 +23,7 @@ const normalizeImagePath = (imgPath) => {
     return `/uploads/${imgPath}`;
 };
 
+
 const normalizeProduct = (product) => {
     const obj = typeof product.toObject === 'function' ? product.toObject() : { ...product };
     if (obj.image) obj.image = normalizeImagePath(obj.image);
