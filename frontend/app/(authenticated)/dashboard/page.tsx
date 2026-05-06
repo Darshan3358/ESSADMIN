@@ -360,7 +360,7 @@ const refetchChartData = async (range: DateRange) => {
                                             <p className="text-lg font-black text-yellow-300">
                                                 {stats.views.toLocaleString()}
                                             </p>
-                                            <p className="text-[9px] font-bold text-white/50 uppercase tracking-widest mt-0.5">Total</p>
+                                            <p className="text-[9px] font-bold text-white/50 uppercase tracking-widest mt-0.5">Views</p>
                                         </div>
                                     </div>
                                 </div>
@@ -410,6 +410,7 @@ const refetchChartData = async (range: DateRange) => {
                                     })
                                 ) : (
                                     <div className="flex flex-col items-center justify-center h-40 text-white/20 gap-3">
+
                                         <Box className="w-12 h-12 opacity-20" />
                                         <p className="text-sm font-bold">No category data available</p>
                                     </div>
