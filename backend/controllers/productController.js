@@ -601,6 +601,8 @@ module.exports = {
     removeFromStore,
     getFeaturedProducts,
     serveProductImage,
-    getProductCategories
+    getProductCategories,
+    normalizeImagePath,
+    normalizeProduct
 };
 

@@ -16,6 +16,7 @@ const createNotification = require('../utils/notifications');
 const Supplier = require('../models/Supplier');
 const GuaranteeMoney = require('../models/GuaranteeMoney');
 const ShopProfile = require('../models/ShopProfile');
+const { normalizeProduct } = require('./productController');
 
 // ===================== SELLER STATISTICS FOR ADMIN ====================
 
@@ -1122,7 +1123,7 @@ const getSellerStoreProducts = asyncHandler(async (req, res) => {
 
     res.json({
         success: true,
-        products,
+        products: products.map(p => normalizeProduct(p)),
         total: products.length,
         sellerInfo: { name: seller.name, shop_name: seller.shop_name, email: seller.email }
     });
@@ -1217,7 +1218,7 @@ const getAllProducts = asyncHandler(async (req, res) => {
         .filter(c => c._id)
         .map(c => ({ name: String(c._id), count: Number(c.count) }));
 
-    res.json({ success: true, products, total, page, pages: Math.ceil(total / limit), categories });
+    res.json({ success: true, products: products.map(p => normalizeProduct(p)), total, page, pages: Math.ceil(total / limit), categories });
 });
 
 // @desc    Create product (admin adds to storehouse)

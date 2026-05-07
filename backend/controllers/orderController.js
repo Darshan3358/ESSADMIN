@@ -10,6 +10,7 @@ const Recharge = require('../models/Recharge');
 const SiteSetting = require('../models/SiteSetting');
 const createNotification = require('../utils/notifications');
 const Supplier = require('../models/Supplier');
+const { normalizeProduct } = require('./productController');
 
 // @desc    Create new order
 // @route   POST /api/orders
@@ -132,7 +133,7 @@ const getOrderById = asyncHandler(async (req, res) => {
             mask_sign: maskSign, // Inform frontend about the masking character
             orderItems: orderItems.map(item => ({
                 _id: item._id,
-                product: item.product_id, // Populated product details
+                product: item.product_id ? normalizeProduct(item.product_id) : null, // Populated product details
                 quantity: item.quantity,
                 price: item.price
             }))

@@ -2,22 +2,26 @@ import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
     async rewrites() {
+        const isProd = process.env.NODE_ENV === 'production';
+        // Use environment variable if set, otherwise fallback to local/live defaults
+        const backendUrl = process.env.BACKEND_URL || (isProd ? 'https://smartseller-backend.vercel.app' : 'http://localhost:5001');
+        
         return [
             {
                 source: '/api/:path*',
-                destination: 'http://localhost:5001/api/:path*',
+                destination: `${backendUrl}/api/:path*`,
             },
             {
                 source: '/backend/:path*',
-                destination: 'http://localhost:5001/api/:path*',
+                destination: `${backendUrl}/api/:path*`,
             },
             {
                 source: '/uploads/:path*',
-                destination: 'http://localhost:5001/uploads/:path*',
+                destination: `${backendUrl}/uploads/:path*`,
             },
             {
                 source: '/product_images/:path*',
-                destination: 'http://localhost:5001/product_images/:path*',
+                destination: `${backendUrl}/product_images/:path*`,
             },
         ];
     },
@@ -53,29 +57,34 @@ const nextConfig: NextConfig = {
                 protocol: 'http',
                 hostname: 'localhost',
                 port: '5001',
-                pathname: '/uploads/**',
-            },
-            {
-                protocol: 'http',
-                hostname: 'localhost',
-                port: '5001',
-                pathname: '/product_images/**',
+                pathname: '/**',
             },
             {
                 protocol: 'http',
                 hostname: 'localhost',
                 port: '5000',
-                pathname: '/uploads/**',
+                pathname: '/**',
+            },
+            {
+                protocol: 'http',
+                hostname: '127.0.0.1',
+                port: '5001',
+                pathname: '/**',
             },
             {
                 protocol: 'https',
                 hostname: 'smartseller-backend.vercel.app',
-                pathname: '/uploads/**',
+                pathname: '/**',
             },
             {
                 protocol: 'https',
                 hostname: '*.vercel.app',
                 pathname: '/uploads/**',
+            },
+            {
+                protocol: 'https',
+                hostname: '*.vercel.app',
+                pathname: '/product_images/**',
             },
             {
                 protocol: 'https',
@@ -90,6 +99,11 @@ const nextConfig: NextConfig = {
             {
                 protocol: 'https',
                 hostname: 'images.unsplash.com',
+                pathname: '/**',
+            },
+            {
+                protocol: 'https',
+                hostname: 'res.cloudinary.com',
                 pathname: '/**',
             },
         ],

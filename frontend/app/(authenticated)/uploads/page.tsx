@@ -6,6 +6,7 @@ import {
     MoreVertical, Download, ExternalLink, Plus, HardDrive,
     Trash2, Loader2, Upload, RefreshCw, File, AlertCircle, CheckCircle
 } from 'lucide-react';
+import { getFullImageUrl } from '@/lib/api';
 
 interface UploadedFile {
     name: string;
@@ -302,7 +303,7 @@ export default function UploadsPage() {
                                     <div className="w-full aspect-square bg-gray-50 rounded-2xl mb-5 flex items-center justify-center relative overflow-hidden group-hover:bg-primary-50 transition-colors">
                                         {file.type === 'image' ? (
                                             <img
-                                                src={`http://localhost:5001${file.url}`}
+                                                src={getFullImageUrl(file.url)}
                                                 alt={file.name}
                                                 className="w-full h-full object-cover rounded-2xl"
                                                 onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
@@ -315,7 +316,7 @@ export default function UploadsPage() {
                                         <div className="absolute inset-0 bg-primary-600/90 flex flex-col items-center justify-center gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-4 group-hover:translate-y-0 rounded-2xl">
                                             <div className="flex gap-2">
                                                 <a
-                                                    href={`http://localhost:5001${file.url}`}
+                                                    href={getFullImageUrl(file.url)}
                                                     download={file.name}
                                                     className="p-3 bg-white text-primary-600 rounded-xl hover:scale-110 transition-transform"
                                                     title="Download"
@@ -323,7 +324,7 @@ export default function UploadsPage() {
                                                     <Download className="w-4 h-4" />
                                                 </a>
                                                 <a
-                                                    href={`http://localhost:5001${file.url}`}
+                                                    href={getFullImageUrl(file.url)}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     className="p-3 bg-white text-primary-600 rounded-xl hover:scale-110 transition-transform"
