@@ -11,6 +11,7 @@ const createNotification = require('../utils/notifications');
 const Notification = require('../models/Notification');
 const Supplier = require('../models/Supplier');
 const { normalizeProduct } = require('./productController');
+const { buildOrderSearchOr } = require('../utils/orderSearchHelper');
 
 // @desc    Create new order
 // @route   POST /api/orders
@@ -283,17 +284,12 @@ const getMyOrders = asyncHandler(async (req, res) => {
 
     let filter = { seller_id: { $in: sellerIdFilter } };
 
-    // Keyword search integration
+    // Multi-field keyword search integration (store name, client name, amount, date, order code)
     if (req.query.keyword) {
-        const keyword = req.query.keyword;
-        const searchRegex = { $regex: keyword, $options: 'i' };
-
-        filter.$or = [
-            { customer_name: searchRegex },
-            { order_code: searchRegex },
-            { customer_email: searchRegex },
-            { customer_phone: searchRegex }
-        ];
+        const searchConditions = buildOrderSearchOr(req.query.keyword);
+        if (searchConditions.length > 0) {
+            filter.$or = searchConditions;
+        }
     }
 
     // Status filter
@@ -388,17 +384,19 @@ const getOrders = asyncHandler(async (req, res) => {
 
     let query = Order.find({}).populate('seller_id', 'id name');
 
-    // Custom Search Logic for Orders (since APIFeatures defaults to 'name')
+    let searchConditions = [];
     if (req.query.keyword) {
-        const keyword = req.query.keyword;
-        const searchRegex = { $regex: keyword, $options: 'i' };
-        query = query.find({
+        const matchedSellers = await Seller.find({
             $or: [
-                { customer_name: searchRegex },
-                { order_code: searchRegex },
-                { customer_email: searchRegex }
+                { shop_name: { $regex: req.query.keyword, $options: 'i' } },
+                { name: { $regex: req.query.keyword, $options: 'i' } }
             ]
-        });
+        }).select('_id id').lean();
+        const matchedSellerIds = matchedSellers.flatMap(s => [s._id, s.id, String(s._id), String(s.id)].filter(Boolean));
+        searchConditions = buildOrderSearchOr(req.query.keyword, matchedSellerIds);
+        if (searchConditions.length > 0) {
+            query = query.find({ $or: searchConditions });
+        }
     }
 
     // Create a copy of query params to pass to APIFeatures, excluding keyword to avoid double filtering
@@ -413,19 +411,9 @@ const getOrders = asyncHandler(async (req, res) => {
     const orders = await features.query;
 
     // Get total count for pagination (approximate or filtered)
-    // To get accurate filtered count, we'd need to run a separate count query with the same filters
-    // For now, simpler approach or separate count query:
     let countQuery = Order.find({});
-    if (req.query.keyword) {
-        const keyword = req.query.keyword;
-        const searchRegex = { $regex: keyword, $options: 'i' };
-        countQuery = countQuery.find({
-            $or: [
-                { customer_name: searchRegex },
-                { order_code: searchRegex },
-                { customer_email: searchRegex }
-            ]
-        });
+    if (searchConditions.length > 0) {
+        countQuery = countQuery.find({ $or: searchConditions });
     }
     const total = await countQuery.countDocuments();
 

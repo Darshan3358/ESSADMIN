@@ -113,7 +113,7 @@ export default function LandingPage() {
                             </button>
                         </div>
                         <div className={styles.imageContent}>
-                            <img src="https://i.ebayimg.com/00/s/NjY3WDE2MDA=/z/wdoAAOSwU3tksa02/$_57.JPG" alt="Merchant packing box" />
+                            <img src="/merchant-business.jpg" alt="Merchant packing box" />
                         </div>
                     </div>
                 </div>

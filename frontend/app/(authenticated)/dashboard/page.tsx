@@ -13,7 +13,7 @@ const TodaySalesCard = dynamic(() => import('@/components/dashboard/MetricCard')
 const ThisMonthSalesCard = dynamic(() => import('@/components/dashboard/MetricCard').then(mod => mod.ThisMonthSalesCard));
 const LastMonthSalesCard = dynamic(() => import('@/components/dashboard/MetricCard').then(mod => mod.LastMonthSalesCard));
 import { ChartDataPoint, DateRange } from '@/types';
-import { TrendingUp, Package, Zap, Sparkles, Activity, ArrowUpRight, Globe, CheckCircle2, Heart, Eye, Gem, Shield, Clock, ArrowRight, X, Star, Box } from 'lucide-react';
+import { TrendingUp, Package, Zap, Sparkles, Activity, ArrowUpRight, Globe, CheckCircle2, Heart, Eye, Gem, Shield, Clock, ArrowRight, X, Star, Box, ChevronRight, ShoppingCart } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
 import { useRouter } from 'next/navigation';
@@ -43,7 +43,7 @@ export default function DashboardPage() {
         planFeatures: [] as string[],
         categoryCounts: [] as any[]
     });
-    
+
     const [planDisplayData, setPlanDisplayData] = useState<any>({
         plan_title: 'Loading...',
         used_text: '0',
@@ -56,34 +56,34 @@ export default function DashboardPage() {
     const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [showHealthModal, setShowHealthModal] = useState(false);
-    
-    
- 
-const mapStats = (dbStats: any) => ({
-    totalLifetimeSales: dbStats.totalSales || 0,
-    amountReceivables: dbStats.receivables || 0,
-    todaySales: dbStats.todaySales || 0,
-    thisMonthSales: dbStats.thisMonthSales || 0,
-    lastMonthSales: dbStats.lastMonthSales || 0,
-    netProfit: dbStats.netProfit || 0,
-    netProfitMargin: dbStats.netProfitMargin || 0,
-    planName: dbStats.planName || 'Free Plan',
-    productLimit: dbStats.productLimit || 0,
-    totalProducts: dbStats.totalProducts || 0,
-    remainingProducts: dbStats.remainingProducts || 0,
-    views: dbStats.views || 0,
-    usedViews: dbStats.used_views || 0,
-    remainingViews: dbStats.remaining_views || 0,
-    planFeatures: dbStats.planFeatures || [],
-    categoryCounts: dbStats.categoryCounts || []
-});
 
-const refetchChartData = async (range: DateRange) => {
-    let days = 7;
-    if (range === '30days' || range === '1M') days = 30;
-    if (range === '6months' || range === '6M') days = 180;
-    if (range === '12months' || range === '1Y') days = 365;
-    if (range === 'ytd') days = 365; // Handle YTD as 1 year for now
+
+
+    const mapStats = (dbStats: any) => ({
+        totalLifetimeSales: dbStats.totalSales || 0,
+        amountReceivables: dbStats.receivables || 0,
+        todaySales: dbStats.todaySales || 0,
+        thisMonthSales: dbStats.thisMonthSales || 0,
+        lastMonthSales: dbStats.lastMonthSales || 0,
+        netProfit: dbStats.netProfit || 0,
+        netProfitMargin: dbStats.netProfitMargin || 0,
+        planName: dbStats.planName || 'Free Plan',
+        productLimit: dbStats.productLimit || 0,
+        totalProducts: dbStats.totalProducts || 0,
+        remainingProducts: dbStats.remainingProducts || 0,
+        views: dbStats.views || 0,
+        usedViews: dbStats.used_views || 0,
+        remainingViews: dbStats.remaining_views || 0,
+        planFeatures: dbStats.planFeatures || [],
+        categoryCounts: dbStats.categoryCounts || []
+    });
+
+    const refetchChartData = async (range: DateRange) => {
+        let days = 7;
+        if (range === '30days' || range === '1M') days = 30;
+        if (range === '6months' || range === '6M') days = 180;
+        if (range === '12months' || range === '1Y') days = 365;
+        if (range === 'ytd') days = 365; // Handle YTD as 1 year for now
 
         try {
             const statsRes = await api.get(`/sellers/stats?days=${days}`);
@@ -155,93 +155,128 @@ const refetchChartData = async (range: DateRange) => {
             <div className="space-y-5 sm:space-y-10 pb-10 sm:pb-20 max-w-[1600px] mx-auto transition-all duration-500">
 
 
-                {/* Hero Welcome Section */}
-                <section className="relative overflow-hidden group">
-                    <div className="absolute inset-0 bg-gradient-to-r from-primary-600 to-blue-700 rounded-[2.5rem] opacity-90 group-hover:opacity-100 transition-opacity duration-1000 shadow-[0_20px_50px_rgba(79,70,229,0.3)]"></div>
-                    <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20viewBox=%220%200%20200%20200%22%20xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter%20id=%22noiseFilter%22%3E%3CfeTurbulence%20type=%22fractalNoise%22%20baseFrequency=%220.65%22%20numOctaves=%223%22%20stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect%20width=%22100%25%22%20height=%22100%25%22%20filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E')] opacity-20 pointer-events-none"></div>
+                {/* Hero Welcome Section - Two Separate Cards */}
+                <section className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-stretch">
+                    {/* Left: Welcome Banner */}
+                    <div className="lg:col-span-7 xl:col-span-8 relative overflow-hidden rounded-[2rem] bg-gradient-to-r from-blue-600 via-primary-600 to-indigo-700 shadow-[0_20px_50px_rgba(37,99,235,0.25)] p-6 sm:p-8 lg:p-10 text-white flex flex-col justify-between group">
+                        {/* Ambient Glows */}
+                        <div className="absolute top-[-20%] right-[10%] w-72 h-72 bg-white/10 rounded-full blur-3xl pointer-events-none"></div>
+                        <div className="absolute bottom-[-20%] left-[10%] w-60 h-60 bg-blue-400/20 rounded-full blur-3xl pointer-events-none"></div>
 
-                    {/* Floating Decorative Elements */}
-                    <div className="absolute top-[-20%] right-[-5%] w-64 h-64 bg-white/10 rounded-full blur-3xl animate-float-slow"></div>
-                    <div className="absolute bottom-[-20%] left-[10%] w-48 h-48 bg-blue-400/20 rounded-full blur-3xl animate-float"></div>
+                        {/* Content Container */}
+                        <div className="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-6">
+                            {/* Text & Action */}
+                            <div className="space-y-4 max-w-xl text-left flex-1">
+                                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-white/15 backdrop-blur-md rounded-full border border-white/20 shadow-inner">
+                                    <Zap className="w-3.5 h-3.5 text-yellow-300 fill-yellow-300" />
+                                    <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-white">Live Store Intelligence</span>
+                                </div>
 
-                    <div className="relative z-10 p-4 sm:p-10 lg:p-14 flex flex-col md:flex-row items-center justify-between gap-4 sm:gap-10 text-center md:text-left">
-                        <div className="text-white space-y-4 md:space-y-6 max-w-2xl">
-                            <div className="inline-flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 bg-white/10 backdrop-blur-md rounded-full border border-white/20 animate-fade-in shadow-inner mx-auto md:mx-0">
-                                <Zap className="w-3 md:w-4 h-3 md:h-4 text-yellow-300 fill-yellow-300" />
-                                <span className="text-[10px] md:text-xs font-bold uppercase tracking-wider">Live Store Intelligence</span>
+                                <div>
+                                    <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight leading-tight text-white">
+                                        Hello, <span className="text-yellow-300">{(user.shop_name || user.name || 'DMT').toUpperCase()}</span> !
+                                    </h1>
+                                    <p className="text-sm sm:text-base text-blue-50/90 font-medium mt-3 leading-relaxed max-w-md">
+                                        Welcome back to your dashboard. All systems are online and running smoothly.
+                                    </p>
+                                </div>
                             </div>
-                            <div className="space-y-2">
-                                <h1 className="text-xl sm:text-4xl lg:text-7xl font-black tracking-tight animate-slide-up leading-tight flex flex-wrap items-center gap-2 sm:gap-3">
-                                    Hello, <span className="text-yellow-300">{(user.shop_name || user.name || 'Seller').toUpperCase()}</span>!
-                                </h1>
-                                <p className="text-base md:text-xl text-primary-50 opacity-90 animate-slide-up stagger-1 max-w-lg mx-auto md:mx-0">
-                                    Welcome back to your dashboard. All systems are online and running smoothly.
+                        </div>
+                    </div>
+
+                    {/* Right: Store Health Card */}
+                    <div className="lg:col-span-5 xl:col-span-4 bg-white dark:bg-slate-900 rounded-[2rem] p-5 sm:p-6 shadow-[0_10px_30px_rgba(0,0,0,0.04)] border border-slate-100 dark:border-slate-800 flex flex-col justify-between text-left relative overflow-hidden">
+                        {/* Header Row */}
+                        <div className="flex justify-between items-center w-full">
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-8 h-8 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
+                                    <Activity className="w-4 h-4" />
+                                </div>
+                                <span className="text-sm sm:text-base font-black text-slate-800 dark:text-slate-100">Store Health</span>
+                            </div>
+                            <span className="text-[11px] font-bold text-[#16a34a] bg-[#eefaf2] px-3 py-1 rounded-full border border-[#dcfce7] flex items-center gap-1.5">
+                                <span className="w-1.5 h-1.5 bg-[#16a34a] rounded-full animate-pulse"></span>
+                                {user.store_status || 'ACTIVE'}
+                            </span>
+                        </div>
+
+                        {/* Middle: Performance & Gauge */}
+                        <div className="grid grid-cols-[1fr_auto] gap-4 items-center my-3">
+                            <div>
+                                <h4 className="text-4xl sm:text-5xl font-black text-slate-900 dark:text-white leading-none tracking-tight">
+                                    {user.store_health ?? 0}%
+                                </h4>
+                                <p className="text-xs font-semibold text-slate-400 mt-2">Performance</p>
+                                <p className="text-sm font-black text-blue-600 dark:text-blue-400 mt-0.5">
+                                    {user.store_performance || 'Initial State'}
                                 </p>
+                            </div>
+
+                            {/* Circular Gauge */}
+                            <div
+                                onClick={() => setShowHealthModal(true)}
+                                className="w-24 h-24 sm:w-28 sm:h-28 rounded-full border-4 border-blue-100 dark:border-slate-800 flex flex-col items-center justify-center relative shadow-xs cursor-pointer hover:scale-105 transition-transform"
+                                title="Click to view health details"
+                            >
+                                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-blue-600 flex items-center justify-center text-white shadow-md shadow-blue-500/25">
+                                    <Activity className="w-4 h-4 sm:w-5 sm:h-5" />
+                                </div>
+                                <span className="text-[9px] font-extrabold text-slate-600 dark:text-slate-300 mt-1">Healthy</span>
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-0.5"></span>
                             </div>
                         </div>
 
-                        {/* Single Store Health Card */}
-                        <div className="relative w-full flex justify-center md:block md:w-auto mt-6 md:mt-0">
-                            <div className="glass-card bg-gradient-to-br from-[#f8fafc] to-[#eef2ff] dark:from-slate-800 dark:to-slate-900 border-t-[4px] border-t-[#22c55e] rounded-[18px] p-4 sm:p-[20px] w-full max-w-[340px] md:max-w-[320px] lg:max-w-none backdrop-blur-3xl shadow-[0_12px_30px_rgba(0,0,0,0.08)] transition-all duration-300 relative overflow-hidden group/card flex flex-col gap-3 sm:gap-[16px]">
-                                {/* Subtle background glow */}
-                                <div className="absolute -top-10 -right-10 w-40 h-40 bg-green-100/40 rounded-full blur-3xl"></div>
+                        {/* Show Detail Button (placed under % as requested) */}
+                        <div className="w-full my-1">
+                            <button
+                                onClick={() => setShowHealthModal(true)}
+                                className="w-full flex items-center justify-center gap-2 py-2 px-4 border border-[#22c55e] text-[#16a34a] dark:text-[#22c55e] bg-transparent hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20 rounded-xl font-bold text-xs transition-all active:scale-95"
+                            >
+                                <Eye className="w-3.5 h-3.5 text-[#22c55e]" />
+                                <span>Show Detail</span>
+                            </button>
+                        </div>
 
-                                {/* Header Row */}
-                                <div className="relative z-10 flex justify-between items-center w-full">
-                                    <div className="flex items-center gap-2 sm:gap-3">
-                                        <div className="p-1.5 sm:p-2 bg-green-50 dark:bg-green-900/20 rounded-xl shadow-inner">
-                                            <Heart className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 dark:text-green-400" />
-                                        </div>
-                                        <span className="text-xs sm:text-sm font-black text-slate-800 dark:text-slate-100">Store Health</span>
+                        {/* Bottom: 3 Metric Tiles */}
+                        <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                            {/* Total Views */}
+                            <div className="bg-slate-50 dark:bg-slate-800/60 rounded-xl p-2.5 flex flex-col items-center text-center">
+                                <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400">
+                                    <div className="w-5 h-5 rounded-full bg-blue-50 dark:bg-blue-900/40 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                                        <Eye className="w-3 h-3" />
                                     </div>
-                                    <span className="text-[10px] sm:text-[11px] font-medium text-[#15803d] bg-[#dcfce7] px-[8px] sm:px-[10px] py-[2px] sm:py-[3px] rounded-full flex items-center gap-1">
-                                        <span className="w-1.5 h-1.5 bg-[#15803d] rounded-full animate-pulse inline-block"></span>
-                                        {user.store_status || 'ACTIVE'}
-                                    </span>
+                                    <span className="text-[10px] font-bold">Total Views</span>
                                 </div>
+                                <p className="text-sm sm:text-base font-black text-slate-900 dark:text-white mt-1.5">
+                                    {stats.views.toLocaleString()}
+                                </p>
+                            </div>
 
-                                {/* Split Layout Area */}
-                                <div className="relative z-10 grid grid-cols-[auto_1fr] gap-3 sm:gap-5 items-center">
-                                    {/* Left: Hero Score */}
-                                    <div className="text-left">
-                                        <h4 className="text-3xl sm:text-[42px] font-[800] text-[#111827] dark:text-white leading-none tracking-tight">
-                                            {user.store_health ?? 0}%
-                                        </h4>
+                            {/* Orders */}
+                            <div className="bg-slate-50 dark:bg-slate-800/60 rounded-xl p-2.5 flex flex-col items-center text-center">
+                                <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400">
+                                    <div className="w-5 h-5 rounded-full bg-blue-50 dark:bg-blue-900/40 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                                        <ShoppingCart className="w-3 h-3" />
                                     </div>
-
-                                    {/* Right: Compact Info Block */}
-                                    <div className="flex flex-col space-y-1">
-                                        <span className="text-[11px] text-[#6b7280] font-medium">Performance</span>
-                                        <span className="text-[13px] font-bold text-[#15803d] leading-tight mb-1">{user.store_performance || 'Initial State'}</span>
-                                        
-                                        {/* Progress bar */}
-                                        <div className="h-[10px] w-full bg-[#e5e7eb] dark:bg-slate-800 rounded-full overflow-hidden">
-                                            <div
-                                                className="h-full bg-gradient-to-r from-[#22c55e] to-[#4ade80] rounded-full transition-all duration-1000"
-                                                style={{ width: `${user.store_health ?? 0}%` }}
-                                            ></div>
-                                        </div>
-                                    </div>
+                                    <span className="text-[10px] font-bold">Orders</span>
                                 </div>
+                                <p className="text-sm sm:text-base font-black text-slate-900 dark:text-white mt-1.5">
+                                    {(stats as any).orders || (stats as any).totalOrders || 0}
+                                </p>
+                            </div>
 
-                                 {/* Views Metric Display inside First Card */}
-                                 <div className="relative z-10 pt-2 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between px-1 w-full">
-                                     <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Total Views</span>
-                                     <span className="text-sm font-black text-emerald-600 dark:text-emerald-400">{stats.views.toLocaleString()}</span>
-                                 </div>
-
-                                 {/* Bottom Info */}
-                                 <div className="relative z-10 mt-1 flex flex-col items-start gap-[12px] w-full">
-                                     {/* Show Detail Button */}
-                                     <button
-                                         onClick={() => setShowHealthModal(true)}
-                                         className="w-full flex items-center justify-center gap-2 p-[10px] border border-[#22c55e] text-[#22c55e] bg-transparent hover:bg-green-50 dark:hover:bg-green-900/20 rounded-[10px] font-bold text-xs transition-all active:scale-95"
-                                     >
-                                         <Eye className="w-3.5 h-3.5" />
-                                         Show Detail
-                                     </button>
-                                 </div>
-                             </div>
+                            {/* Response Time */}
+                            <div className="bg-slate-50 dark:bg-slate-800/60 rounded-xl p-2.5 flex flex-col items-center text-center">
+                                <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400">
+                                    <div className="w-5 h-5 rounded-full bg-blue-50 dark:bg-blue-900/40 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                                        <Zap className="w-3 h-3" />
+                                    </div>
+                                    <span className="text-[10px] font-bold">Response Time</span>
+                                </div>
+                                <p className="text-sm sm:text-base font-black text-slate-900 dark:text-white mt-1.5">
+                                    -
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </section>
@@ -354,20 +389,20 @@ const refetchChartData = async (range: DateRange) => {
                                         Upgrade Level <ArrowRight className="w-4 h-4" />
                                     </button>
 
-                                     <div className="grid grid-cols-2 gap-4 text-center pt-4 border-t border-white/10">
-                                         <div>
-                                             <p className="text-lg font-black text-white">
-                                                 {stats.usedViews.toLocaleString()}
-                                             </p>
-                                             <p className="text-[9px] font-bold text-white/50 uppercase tracking-widest mt-0.5">Total Product Use</p>
-                                         </div>
-                                         <div>
-                                             <p className="text-lg font-black text-white">
-                                                 {stats.remainingViews.toLocaleString()}
-                                             </p>
-                                             <p className="text-[9px] font-bold text-white/50 uppercase tracking-widest mt-0.5">Remaining</p>
-                                         </div>
-                                     </div>
+                                    <div className="grid grid-cols-2 gap-4 text-center pt-4 border-t border-white/10">
+                                        <div>
+                                            <p className="text-lg font-black text-white">
+                                                {stats.usedViews.toLocaleString()}
+                                            </p>
+                                            <p className="text-[9px] font-bold text-white/50 uppercase tracking-widest mt-0.5">Total Product Use</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-lg font-black text-white">
+                                                {stats.remainingViews.toLocaleString()}
+                                            </p>
+                                            <p className="text-[9px] font-bold text-white/50 uppercase tracking-widest mt-0.5">Remaining</p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -382,7 +417,7 @@ const refetchChartData = async (range: DateRange) => {
                                         const percentage = Math.round((cat.count / stats.totalProducts) * 100) || 0;
                                         const colors = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4'];
                                         const color = colors[i % colors.length];
-                                        
+
                                         return (
                                             <div key={i} className="flex flex-col gap-2">
                                                 <div className="flex justify-between items-center">
@@ -390,7 +425,7 @@ const refetchChartData = async (range: DateRange) => {
                                                     <span className="text-[15px] font-black text-slate-900">{cat.count} ({percentage}%)</span>
                                                 </div>
                                                 <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                                                    <div 
+                                                    <div
                                                         className="h-full rounded-full transition-all duration-1000"
                                                         style={{ width: `${percentage}%`, backgroundColor: color }}
                                                     ></div>
@@ -422,14 +457,14 @@ const refetchChartData = async (range: DateRange) => {
 
                 {/* New Storehouse Discovery Carousel */}
                 <section className="animate-slide-up stagger-5">
-                    <StorehouseCarousel 
+                    <StorehouseCarousel
                         onProductAdded={async () => {
                             // Refresh featured products when a new product is added to store
                             const productsRes = await api.get('/products/featured');
                             if (productsRes.success) {
                                 setFeaturedProducts(productsRes.data || []);
                             }
-                        }} 
+                        }}
                     />
                 </section>
 
@@ -454,19 +489,19 @@ const refetchChartData = async (range: DateRange) => {
             {showHealthModal && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 text-left">
                     {/* Backdrop */}
-                    <div 
+                    <div
                         className="absolute inset-0 bg-slate-900/60 backdrop-blur-md animate-fade-in"
                         onClick={() => setShowHealthModal(false)}
                     ></div>
-                    
+
                     {/* Modal Content */}
                     <div className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-[0_30px_100px_rgba(0,0,0,0.4)] overflow-hidden border border-white/20 dark:border-white/10 animate-scale-in">
                         {/* Header Gradient */}
                         <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-br from-emerald-500 to-teal-600 opacity-10"></div>
-                        
+
                         <div className="relative p-5 md:p-8 space-y-6 md:space-y-8">
                             {/* Close Button */}
-                            <button 
+                            <button
                                 onClick={() => setShowHealthModal(false)}
                                 className="absolute top-6 right-6 p-2 bg-slate-100 dark:bg-slate-800 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                             >
@@ -500,33 +535,33 @@ const refetchChartData = async (range: DateRange) => {
                             {/* Detailed Metrics List */}
                             <div className="space-y-4">
                                 {[
-                                    { 
-                                        label: 'Order Fulfillment', 
-                                        value: user.diagnostics?.fulfillment || '0%', 
-                                        sub: parseInt(user.diagnostics?.fulfillment || '0') >= 90 ? 'Perfect' : (parseInt(user.diagnostics?.fulfillment || '0') > 0 ? 'Improving' : 'Initial State'), 
-                                        icon: CheckCircle2, 
-                                        color: 'text-emerald-500' 
+                                    {
+                                        label: 'Order Fulfillment',
+                                        value: user.diagnostics?.fulfillment || '0%',
+                                        sub: parseInt(user.diagnostics?.fulfillment || '0') >= 90 ? 'Perfect' : (parseInt(user.diagnostics?.fulfillment || '0') > 0 ? 'Improving' : 'Initial State'),
+                                        icon: CheckCircle2,
+                                        color: 'text-emerald-500'
                                     },
-                                    { 
-                                        label: 'Customer Rating', 
-                                        value: user.diagnostics?.rating || '0/5', 
-                                        sub: parseFloat(user.diagnostics?.rating || '0') >= 4.5 ? 'Elite' : (parseFloat(user.diagnostics?.rating || '0') > 0 ? 'Good' : 'Initial State'), 
-                                        icon: Star, 
-                                        color: 'text-amber-500' 
+                                    {
+                                        label: 'Customer Rating',
+                                        value: user.diagnostics?.rating || '0/5',
+                                        sub: parseFloat(user.diagnostics?.rating || '0') >= 4.5 ? 'Elite' : (parseFloat(user.diagnostics?.rating || '0') > 0 ? 'Good' : 'Initial State'),
+                                        icon: Star,
+                                        color: 'text-amber-500'
                                     },
-                                    { 
-                                        label: 'Response Time', 
-                                        value: user.diagnostics?.responseTime || 'N/A', 
-                                        sub: user.diagnostics?.responseTime && user.diagnostics.responseTime !== 'N/A' ? 'Active' : 'Initial State', 
-                                        icon: Clock, 
-                                        color: 'text-blue-500' 
+                                    {
+                                        label: 'Response Time',
+                                        value: user.diagnostics?.responseTime || 'N/A',
+                                        sub: user.diagnostics?.responseTime && user.diagnostics.responseTime !== 'N/A' ? 'Active' : 'Initial State',
+                                        icon: Clock,
+                                        color: 'text-blue-500'
                                     },
-                                    { 
-                                        label: 'Quality Score', 
-                                        value: user.diagnostics?.qualityScore || '0%', 
-                                        sub: parseInt(user.diagnostics?.qualityScore || '0') >= 90 ? 'Premium' : (parseInt(user.diagnostics?.qualityScore || '0') > 0 ? 'Standard' : 'Initial State'), 
-                                        icon: Shield, 
-                                        color: 'text-blue-500' 
+                                    {
+                                        label: 'Quality Score',
+                                        value: user.diagnostics?.qualityScore || '0%',
+                                        sub: parseInt(user.diagnostics?.qualityScore || '0') >= 90 ? 'Premium' : (parseInt(user.diagnostics?.qualityScore || '0') > 0 ? 'Standard' : 'Initial State'),
+                                        icon: Shield,
+                                        color: 'text-blue-500'
                                     }
                                 ].map((m, i) => (
                                     <div key={i} className="flex items-center justify-between group p-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-2xl transition-all">
@@ -547,7 +582,7 @@ const refetchChartData = async (range: DateRange) => {
                             </div>
 
                             {/* Footer Action */}
-                            <button 
+                            <button
                                 onClick={() => setShowHealthModal(false)}
                                 className="w-full py-5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-3xl font-black text-sm tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-slate-200 dark:shadow-none"
                             >

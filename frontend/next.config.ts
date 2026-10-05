@@ -56,6 +56,12 @@ const nextConfig: NextConfig = {
             {
                 protocol: 'http',
                 hostname: 'localhost',
+                port: '5002',
+                pathname: '/**',
+            },
+            {
+                protocol: 'http',
+                hostname: 'localhost',
                 port: '5001',
                 pathname: '/**',
             },
@@ -63,6 +69,12 @@ const nextConfig: NextConfig = {
                 protocol: 'http',
                 hostname: 'localhost',
                 port: '5000',
+                pathname: '/**',
+            },
+            {
+                protocol: 'http',
+                hostname: '127.0.0.1',
+                port: '5002',
                 pathname: '/**',
             },
             {

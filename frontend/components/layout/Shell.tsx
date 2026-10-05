@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import Navigation from './Navigation';
 import { LayoutDashboard, Menu, Bell, Search, LogOut, ChevronDown, Wallet, PlusCircle, CheckCircle2 } from 'lucide-react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { api, getFullImageUrl } from '@/lib/api';
 import FrozenAccountModal from '../modals/FrozenAccountModal';
@@ -220,7 +220,19 @@ export default function Shell({ children }: { children: React.ReactNode }) {
                     </div>
 
                     <div className="hidden md:flex items-center flex-1 max-w-lg mx-8">
-                        <SearchBar router={router} />
+                        <Suspense fallback={
+                            <div className="relative w-full">
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-slate-500" />
+                                <input
+                                    type="text"
+                                    placeholder="Search products, orders..."
+                                    disabled
+                                    className="w-full pl-11 pr-4 py-2.5 bg-gray-100/50 dark:bg-slate-800/50 border border-transparent dark:border-slate-800/50 rounded-2xl text-sm font-medium"
+                                />
+                            </div>
+                        }>
+                            <SearchBar router={router} />
+                        </Suspense>
                     </div>
 
                     <div className="flex items-center gap-3 lg:gap-4">
@@ -336,36 +348,46 @@ function Smartphone({ size = 24, className = "" }) {
 }
 
 function SearchBar({ router }: { router: ReturnType<typeof useRouter> }) {
-    const [query, setQuery] = useState('');
     const pathname = usePathname();
+    const searchParams = useSearchParams();
+    const currentParam = searchParams?.get('search') || searchParams?.get('keyword') || '';
+    const [query, setQuery] = useState(currentParam);
 
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === 'Enter' && query.trim()) {
-            const q = encodeURIComponent(query.trim());
-            // Route based on current page context
-            if (pathname?.includes('/products')) {
-                router.push(`/products?keyword=${q}`);
-            } else if (pathname?.includes('/orders')) {
-                router.push(`/orders?keyword=${q}`);
-            } else {
-                // Default: search storehouse
-                router.push(`/storehouse?search=${q}`);
-            }
-            setQuery('');
+    // Keep search query synced with URL (e.g. if URL has ?search=chain or ?search=pant)
+    useEffect(() => {
+        setQuery(currentParam);
+    }, [currentParam]);
+
+    const handleSearch = (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
+        const trimmed = query.trim();
+        const q = encodeURIComponent(trimmed);
+
+        if (pathname?.includes('/orders')) {
+            router.push(trimmed ? `/orders?keyword=${q}` : '/orders');
+        } else {
+            // For Dashboard, Storehouse, Reports, Products, Packages, etc.
+            // Direct product searches straight to Storehouse catalog
+            router.push(trimmed ? `/storehouse?search=${q}` : '/storehouse');
         }
     };
 
     return (
-        <div className="relative w-full">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-slate-500" />
+        <form onSubmit={handleSearch} className="relative w-full">
+            <button
+                type="submit"
+                aria-label="Search"
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500 hover:text-primary-600 transition-colors cursor-pointer"
+            >
+                <Search className="w-4 h-4" />
+            </button>
             <input
                 type="text"
                 placeholder="Search products, orders..."
                 value={query}
                 onChange={e => setQuery(e.target.value)}
-                onKeyDown={handleKeyDown}
                 className="w-full pl-11 pr-4 py-2.5 bg-gray-100/50 dark:bg-slate-800/50 border border-transparent dark:border-slate-800/50 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:focus:ring-primary-400/20 focus:bg-white dark:focus:bg-slate-800 transition-all text-sm font-medium dark:text-slate-100 dark:placeholder:text-slate-500"
             />
-        </div>
+        </form>
     );
 }

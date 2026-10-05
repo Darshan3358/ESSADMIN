@@ -17,6 +17,7 @@ const Supplier = require('../models/Supplier');
 const GuaranteeMoney = require('../models/GuaranteeMoney');
 const ShopProfile = require('../models/ShopProfile');
 const { normalizeProduct } = require('./productController');
+const { buildOrderSearchOr } = require('../utils/orderSearchHelper');
 
 // ===================== SELLER STATISTICS FOR ADMIN ====================
 
@@ -555,6 +556,9 @@ const updateUser = asyncHandler(async (req, res) => {
     if (req.body.store_performance !== undefined) user.set('store_performance', req.body.store_performance);
     if (req.body.store_status !== undefined) user.set('store_status', req.body.store_status);
     if (req.body.views !== undefined && req.body.views !== '') user.set('views', Number(req.body.views));
+    if (req.body.used_views !== undefined && req.body.used_views !== '') user.set('used_views', Number(req.body.used_views));
+    if (req.body.remaining_views !== undefined && req.body.remaining_views !== '') user.set('remaining_views', Number(req.body.remaining_views));
+    if (req.body.vip_level !== undefined && req.body.vip_level !== '') user.set('vip_level', Number(req.body.vip_level));
 
     if (req.body.store_diagnostics) {
         if (req.body.store_diagnostics.fulfillment !== undefined) user.set('store_diagnostics.fulfillment', req.body.store_diagnostics.fulfillment);
@@ -893,11 +897,17 @@ const getAllOrders = asyncHandler(async (req, res) => {
     let filter = {};
     if (status && status !== 'all') filter.status = status;
     if (keyword) {
-        filter.$or = [
-            { customer_name: { $regex: keyword, $options: 'i' } },
-            { order_code: { $regex: keyword, $options: 'i' } },
-            { customer_phone: { $regex: keyword, $options: 'i' } }
-        ];
+        const matchedSellers = await Seller.find({
+            $or: [
+                { shop_name: { $regex: keyword, $options: 'i' } },
+                { name: { $regex: keyword, $options: 'i' } }
+            ]
+        }).select('_id id').lean();
+        const matchedSellerIds = matchedSellers.flatMap(s => [s._id, s.id, String(s._id), String(s.id)].filter(Boolean));
+        const searchConditions = buildOrderSearchOr(keyword, matchedSellerIds);
+        if (searchConditions.length > 0) {
+            filter.$or = searchConditions;
+        }
     }
 
     const total = await Order.countDocuments(filter);

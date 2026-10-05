@@ -16,6 +16,8 @@ function StorehousePageInner() {
     const { user, isLoading: authLoading } = useAuth();
     const router = useRouter();
     const searchParams = useSearchParams();
+    const urlSearch = searchParams.get('search') || searchParams.get('keyword') || '';
+    const urlCategory = searchParams.get('category') || 'All';
 
     const [products, setProducts] = useState<any[]>([]);
     const [addedProductIds, setAddedProductIds] = useState<Set<string>>(new Set());
@@ -23,12 +25,12 @@ function StorehousePageInner() {
     const [isPageLoading, setIsPageLoading] = useState(false);
     const [addingId, setAddingId] = useState<string | null>(null);
     const [addError, setAddError] = useState<string | null>(null);
-    const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
-    const [selectedCategory, setSelectedCategory] = useState('All');
+    const [searchQuery, setSearchQuery] = useState(urlSearch);
+    const [selectedCategory, setSelectedCategory] = useState(urlCategory);
     const [totalProducts, setTotalProducts] = useState(0);
     const [categories, setCategories] = useState<{name: string, count?: number}[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
-    const PRODUCTS_PER_PAGE = 12; // Increased to 12 for better layout
+    const PRODUCTS_PER_PAGE = 12;
 
     useEffect(() => {
         if (!authLoading && !user) {
@@ -36,37 +38,15 @@ function StorehousePageInner() {
         }
     }, [user, authLoading, router]);
 
-    const fetchData = async () => {
-        setIsLoading(true);
-        try {
-            // 1. Fetch categories and my-product-ids (parallel)
-            const [catRes, myRes] = await Promise.all([
-                api.get('/products/categories'),
-                api.get('/products/my-product-ids')
-            ]);
-
-            if (catRes.success) {
-                setCategories(catRes.data.map((cat: string) => ({ name: cat })));
-            }
-            if (myRes.success) {
-                setAddedProductIds(new Set(myRes.data || []));
-            }
-
-            // 2. Initial product fetch
-            await fetchProducts(1);
-        } catch (error) {
-            console.error('Failed to fetch storehouse data:', error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const fetchProducts = async (page: number) => {
+    const fetchProducts = async (page: number, queryOverride?: string, categoryOverride?: string) => {
         setIsPageLoading(true);
         try {
+            const activeQuery = queryOverride !== undefined ? queryOverride : searchQuery;
+            const activeCat = categoryOverride !== undefined ? categoryOverride : selectedCategory;
+
             let url = `/products?page=${page}&limit=${PRODUCTS_PER_PAGE}`;
-            if (selectedCategory !== 'All') url += `&category=${encodeURIComponent(selectedCategory)}`;
-            if (searchQuery) url += `&keyword=${encodeURIComponent(searchQuery)}`;
+            if (activeCat && activeCat !== 'All') url += `&category=${encodeURIComponent(activeCat)}`;
+            if (activeQuery && activeQuery.trim()) url += `&keyword=${encodeURIComponent(activeQuery.trim())}`;
 
             const res = await api.get(url);
             if (res.success) {
@@ -80,20 +60,66 @@ function StorehousePageInner() {
         }
     };
 
-    const handlePageChange = (newPage: number) => {
-        setCurrentPage(newPage);
-        window.scrollTo({ top: 250, behavior: 'smooth' });
+    const fetchData = async () => {
+        setIsLoading(true);
+        try {
+            const [catRes, myRes] = await Promise.all([
+                api.get('/products/categories'),
+                api.get('/products/my-product-ids')
+            ]);
+
+            if (catRes.success) {
+                setCategories(catRes.data.map((cat: string) => ({ name: cat })));
+            }
+            if (myRes.success) {
+                setAddedProductIds(new Set(myRes.data || []));
+            }
+
+            await fetchProducts(1, urlSearch, urlCategory);
+        } catch (error) {
+            console.error('Failed to fetch storehouse data:', error);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     useEffect(() => {
         if (user) fetchData();
     }, [user]);
 
+    // React immediately when URL query parameters change (from top search or navigation)
     useEffect(() => {
+        setSearchQuery(urlSearch);
+        setSelectedCategory(urlCategory);
+        setCurrentPage(1);
+
         if (user && !isLoading) {
-            fetchProducts(currentPage);
+            fetchProducts(1, urlSearch, urlCategory);
         }
-    }, [currentPage, selectedCategory, searchQuery]);
+    }, [urlSearch, urlCategory]);
+
+    // In-page search input typing debounce
+    useEffect(() => {
+        if (user && !isLoading && searchQuery !== urlSearch) {
+            const timer = setTimeout(() => {
+                setCurrentPage(1);
+                fetchProducts(1, searchQuery, selectedCategory);
+            }, 300);
+            return () => clearTimeout(timer);
+        }
+    }, [searchQuery]);
+
+    const handlePageChange = (newPage: number) => {
+        setCurrentPage(newPage);
+        window.scrollTo({ top: 250, behavior: 'smooth' });
+        fetchProducts(newPage, searchQuery, selectedCategory);
+    };
+
+    const handleCategoryClick = (catName: string) => {
+        setSelectedCategory(catName);
+        setCurrentPage(1);
+        fetchProducts(1, searchQuery, catName);
+    };
 
     const handleAddToStore = async (product: any) => {
         setAddingId(product._id);
@@ -167,7 +193,7 @@ function StorehousePageInner() {
                             <div className="relative">
                                 <select
                                     value={selectedCategory}
-                                    onChange={(e) => setSelectedCategory(e.target.value)}
+                                    onChange={(e) => handleCategoryClick(e.target.value)}
                                     className="w-full pl-3 pr-8 py-2.5 sm:pl-4 sm:pr-10 sm:py-3.5 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-black appearance-none border-2 border-primary-500 dark:border-primary-600 bg-primary-500 dark:bg-primary-600 text-white focus:outline-none focus:ring-4 focus:ring-primary-400/20 transition-all shadow-lg shadow-primary-500/10"
                                 >
                                     <option value="All">{t('All Products')}</option>
@@ -191,7 +217,7 @@ function StorehousePageInner() {
                             </h3>
                             <div className="space-y-2">
                                 <button
-                                    onClick={() => setSelectedCategory('All')}
+                                    onClick={() => handleCategoryClick('All')}
                                     className={`w-full flex items-center justify-between px-3 py-2 sm:px-4 sm:py-3 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-black transition-all ${selectedCategory === 'All' ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20 active:scale-[0.98]' : 'text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800'}`}
                                 >
                                     <span>{t('All Products')}</span>
@@ -199,7 +225,7 @@ function StorehousePageInner() {
                                 {allCategories.map(cat => (
                                     <button
                                         key={cat.name}
-                                        onClick={() => setSelectedCategory(cat.name)}
+                                        onClick={() => handleCategoryClick(cat.name)}
                                         className={`w-full flex items-center justify-between px-3 py-2 sm:px-4 sm:py-3 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-black transition-all ${selectedCategory === cat.name ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20 active:scale-[0.98]' : 'text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800'}`}
                                     >
                                         <span className="truncate capitalize">{t(cat.name as any)}</span>
@@ -215,6 +241,16 @@ function StorehousePageInner() {
                                 placeholder={t('Search products...')}
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        const trimmed = searchQuery.trim();
+                                        if (trimmed) {
+                                            router.push(`/storehouse?search=${encodeURIComponent(trimmed)}`);
+                                        } else {
+                                            router.push('/storehouse');
+                                        }
+                                    }
+                                }}
                                 className="w-full pl-10 pr-4 py-3 sm:pl-12 sm:pr-6 sm:py-4 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-xl sm:rounded-[24px] focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all text-sm font-bold text-gray-900 dark:text-slate-100 shadow-sm"
                             />
                         </div>
@@ -396,10 +432,16 @@ function StorehousePageInner() {
     );
 }
 
+function StorehouseWrapper() {
+    const searchParams = useSearchParams();
+    const key = searchParams ? searchParams.toString() : '';
+    return <StorehousePageInner key={key} />;
+}
+
 export default function StorehousePage() {
     return (
         <Suspense fallback={<div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-slate-950"><div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin shadow-lg shadow-primary-500/20" /></div>}>
-            <StorehousePageInner />
+            <StorehouseWrapper />
         </Suspense>
     );
 }
