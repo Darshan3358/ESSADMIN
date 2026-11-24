@@ -134,6 +134,11 @@ export default function OrderDetailsPage() {
             return;
         }
 
+        if (!selectedSupplier && !order?.supplier_name) {
+            setPayError(t('Please select a supplier before completing payment'));
+            return;
+        }
+
         setPayLoading(true);
         setPayError('');
         setPayStep('confirming');
@@ -337,7 +342,7 @@ export default function OrderDetailsPage() {
                                 <div className="flex justify-between items-center">
                                     <span className="text-sm font-black text-gray-400 dark:text-slate-500">{t('Supplier Name')}</span>
                                     <span className="text-xs font-medium uppercase tracking-widest text-black dark:text-slate-100">
-                                        {order.supplier_name || 'N/A'}
+                                        {order.supplier_name || <span className="text-amber-500 font-semibold">{t('Unassigned')}</span>}
                                     </span>
                                 </div>
                                 <div className="flex justify-between items-center">
@@ -529,7 +534,10 @@ export default function OrderDetailsPage() {
 
                                             {/* Supplier Selection */}
                                             <div className="space-y-2">
-                                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.15em] px-1">{t('Assign Supplier')}</label>
+                                                <div className="flex justify-between items-center px-1">
+                                                    <label className="block text-[10px] font-black text-gray-500 dark:text-slate-400 uppercase tracking-[0.15em]">{t('Select Supplier')} <span className="text-red-500">*</span></label>
+                                                    {!selectedSupplier && <span className="text-[10px] text-amber-500 font-bold">{t('Required')}</span>}
+                                                </div>
                                                 <div className="relative group/select">
                                                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                                         <Truck size={16} className="text-gray-400 group-focus-within/select:text-primary-500 transition-colors" />

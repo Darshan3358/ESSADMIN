@@ -38,3 +38,4 @@ scripts/
 uploads/
 backend/uploads/*
 !backend/uploads/.gitkeep
+scratch/

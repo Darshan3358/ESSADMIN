@@ -20,14 +20,14 @@ const init = async () => {
     }
 };
 
-if (process.env.NODE_ENV !== 'production') {
-    // Local development - run as normal server
+if (require.main === module || process.env.NODE_ENV !== 'production') {
+    // Local development or standalone server execution - run as normal server
     init().then(() => {
-        const PORT = process.env.PORT || 5000;
+        const PORT = process.env.PORT || 5001;
         // Rotation removed as per request to use only manual Generate Random button
 
         app.listen(PORT, () => {
-            console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+            console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
         });
     });
 }

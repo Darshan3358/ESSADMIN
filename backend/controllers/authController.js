@@ -62,7 +62,7 @@ const getSellerDiagnostics = async (seller) => {
 
 // Generate JWT
 const generateToken = (id) => {
-    return jwt.sign({ id }, process.env.JWT_SECRET, {
+    return jwt.sign({ id }, process.env.JWT_SECRET || 'essmartseller_jwt_dev_secret_key_12345', {
         expiresIn: '30d',
     });
 };
@@ -105,25 +105,25 @@ const authUser = asyncHandler(async (req, res) => {
                     seller.otpExpires = Date.now() + 10 * 60 * 1000;
                     await seller.save();
 
-                    console.log(`[AUTH] OTP generated for ${seller.email}: ${otp}`);
+                    console.log(`[AUTH] Real OTP generated for ${seller.email}: ${otp}`);
 
-                    // Send Email
+                    // Send Real Email via SMTP
                     try {
                         await sendEmail({
                             email: seller.email,
                             subject: 'Your Login OTP - EssSmartSeller',
-                            message: `Hello, your one-time password for login is: ${otp}. It will expire in 10 minutes.`
+                            message: `Hello, your real one-time password for admin login is: ${otp}. It will expire in 10 minutes.`
                         });
                     } catch (emailErr) {
-                        console.error('Failed to send OTP email:', emailErr.message);
+                        console.error('[AUTH] Failed to send real OTP email:', emailErr.message);
+                        res.status(500);
+                        throw new Error(`Failed to deliver OTP to ${seller.email}: ${emailErr.message}. Please configure SMTP_EMAIL and SMTP_PASSWORD in backend/.env to receive real OTP.`);
                     }
 
                     return res.json({
                         requiresOTP: true,
                         email: seller.email,
-                        message: seller.role === 'admin' 
-                            ? `Admin security check: Please enter the OTP sent to your registered email (${seller.email}).` 
-                            : `Two-Factor Authentication is active. Please enter the OTP sent to your email (${seller.email}).`
+                        message: `Security check: A 6-digit verification code has been sent to your email (${seller.email}).`
                     });
                 }
 
@@ -186,7 +186,8 @@ const verifyOtp = asyncHandler(async (req, res) => {
         throw new Error('User not found');
     }
 
-    const isOtpValid = (seller.otp === otp && seller.otpExpires > Date.now()) || otp === '1212' || otp === '121212';
+    // Strict validation: Only verify the real OTP generated and saved in database
+    const isOtpValid = seller.otp && String(seller.otp).trim() === String(otp).trim() && seller.otpExpires > Date.now();
 
     if (isOtpValid) {
         // Clear OTP

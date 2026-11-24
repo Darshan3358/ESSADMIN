@@ -218,7 +218,7 @@ function OrdersPageInner() {
                                                                 </div>
                                                                 <div className="text-left">
                                                                     <span className="text-xs font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500">{t('Store / Supplier')}</span>
-                                                                    <p className="text-sm font-medium text-slate-800 dark:text-slate-200 mt-0.5">{order.supplier_name || 'EssSmart Storehouse'}</p>
+                                                                    <p className="text-sm font-medium text-slate-800 dark:text-slate-200 mt-0.5">{order.supplier_name || <span className="text-amber-600 dark:text-amber-400 font-semibold">{t('Unassigned')}</span>}</p>
                                                                 </div>
                                                                 <div className="text-left">
                                                                     <span className="text-xs font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500">{t('Date')}</span>
@@ -302,7 +302,7 @@ function OrdersPageInner() {
                                                 <td className="px-5 py-4">
                                                     <div className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
                                                         <Store className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                                                        <span className="truncate max-w-[180px]">{order.supplier_name || 'EssSmart Storehouse'}</span>
+                                                        <span className="truncate max-w-[180px]">{order.supplier_name || <span className="text-amber-600 dark:text-amber-400 font-semibold">{t('Unassigned')}</span>}</span>
                                                     </div>
                                                 </td>
                                                 <td className="px-5 py-4 whitespace-nowrap">

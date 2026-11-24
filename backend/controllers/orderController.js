@@ -55,23 +55,11 @@ const addOrderItems = asyncHandler(async (req, res) => {
             cost_amount: totalCostAmount, // Saved cost amount
             payment_method: paymentMethod,
             status: 'pending',
-            payment_status: 'unpaid'
+            payment_status: 'unpaid',
+            // Supplier is NOT auto-allotted on order creation.
+            // It will be chosen by the client during payment/order processing.
+            supplier_name: (req.body.supplier_name && req.body.supplier_name.trim() !== '') ? req.body.supplier_name.trim() : ''
         });
-
-        // Supplier allocation priority:
-        // 1. Manually selected supplier
-        // 2. Eligible active supplier
-        // 3. Fallback default
-        if (req.body.supplier_name && req.body.supplier_name.trim() !== '') {
-            order.supplier_name = req.body.supplier_name.trim();
-        } else {
-            const activeSupplier = await Supplier.findOne({ status: 'active' }).sort({ rating: -1 });
-            if (activeSupplier) {
-                order.supplier_name = activeSupplier.name;
-            } else {
-                order.supplier_name = 'Global Direct Supplier';
-            }
-        }
 
         const createdOrder = await order.save();
 
@@ -202,6 +190,16 @@ const payStorehouse = asyncHandler(async (req, res) => {
         throw new Error('Invalid transaction password');
     }
 
+    // Require client to choose a supplier when processing/paying the order
+    const chosenSupplier = (supplier_name && supplier_name.trim() !== '')
+        ? supplier_name.trim()
+        : (order.supplier_name && order.supplier_name.trim() !== '' ? order.supplier_name.trim() : '');
+
+    if (!chosenSupplier) {
+        res.status(400);
+        throw new Error('Please select a supplier before completing payment');
+    }
+
     const costAmount = order.cost_amount || 0;
 
     // --- CHECK BALANCE ---
@@ -223,15 +221,10 @@ const payStorehouse = asyncHandler(async (req, res) => {
     seller.wallet_balance = (seller.wallet_balance || 0) - costAmount;
     await seller.save();
 
-    // 3. Update Order
+    // 3. Update Order - Allot the chosen supplier at payment time
     order.pick_up_status = 'Picked-Up';
     order.payment_status = 'paid';
-    if (supplier_name && supplier_name.trim() !== '') {
-        order.supplier_name = supplier_name.trim();
-    } else if (!order.supplier_name || order.supplier_name.trim() === '') {
-        const activeSupplier = await Supplier.findOne({ status: 'active' }).sort({ rating: -1 });
-        order.supplier_name = activeSupplier ? activeSupplier.name : 'Global Direct Supplier';
-    }
+    order.supplier_name = chosenSupplier;
     const updatedOrder = await order.save();
 
     // Invalidate order cache

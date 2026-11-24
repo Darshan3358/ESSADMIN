@@ -249,6 +249,7 @@ export default function AdminLoginPage() {
                                     color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase',
                                     letterSpacing: '0.1em', marginBottom: '8px'
                                 }}>Verification Code</label>
+                                
                                 <div style={{ position: 'relative' }}>
                                     <Shield size={18} style={{
                                         position: 'absolute', left: '14px', top: '50%',
@@ -257,7 +258,7 @@ export default function AdminLoginPage() {
                                     <input
                                         type="text"
                                         value={otp}
-                                        onChange={(e) => setOtp(e.target.value)}
+                                        onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
                                         placeholder="6-digit code"
                                         required
                                         maxLength={6}
@@ -272,6 +273,7 @@ export default function AdminLoginPage() {
                                         }}
                                     />
                                 </div>
+                                
                                 <button
                                     type="button"
                                     onClick={() => setShowOTP(false)}

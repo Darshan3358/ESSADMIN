@@ -389,9 +389,9 @@ export default function AdminOrdersPage() {
                                                 ${(o.cost_amount || 0).toFixed(2)}
                                             </td>
                                             <td className="res-hide-mobile" style={{ padding: '13px 14px' }}>
-                                                <div style={{ fontSize: '13px', fontWeight: '800', color: '#10b981', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                <div style={{ fontSize: '13px', fontWeight: '800', color: o.supplier_name ? '#10b981' : '#f59e0b', display: 'flex', alignItems: 'center', gap: '6px' }}>
                                                     <Warehouse size={13} className="opacity-50" />
-                                                    {o.supplier_name || 'EssSmart Storehouse'}
+                                                    {o.supplier_name || 'Unassigned'}
                                                 </div>
                                             </td>
                                             <td className="res-hide-mobile" style={{ padding: '13px 14px' }}>

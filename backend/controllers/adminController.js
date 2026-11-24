@@ -1009,17 +1009,8 @@ const createOrder = asyncHandler(async (req, res) => {
         status: 'pending',
         pick_up_status: 'Unpicked-Up',
         payment_status: 'unpaid',
-        supplier_name: supplier_name || undefined
+        supplier_name: (supplier_name && supplier_name.trim()) || ''
     });
-
-    // Set supplier if available
-    if (!newOrder.supplier_name) {
-        const bestSupplier = await Supplier.findOne({ status: 'active' }).sort({ rating: -1 });
-        if (bestSupplier) {
-            newOrder.supplier_name = bestSupplier.name;
-            await newOrder.save();
-        }
-    }
 
     // Create one OrderItem per product — all linked to the SAME order
     for (const item of productDetails) {
